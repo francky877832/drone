@@ -56,7 +56,6 @@ def run_genetic_algorithm(drones, deliveries, no_fly_zones, generations=20, popu
         fitness_scores.sort(key=lambda x: x[1], reverse=True)
         best_individuals = [fs[0] for fs in fitness_scores[:2]]  # elitizm: en iyi 2 birey korunur
 
-
         # Yeni nesil için liste hazırla
         new_population = best_individuals[:]
 

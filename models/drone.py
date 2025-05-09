@@ -1,11 +1,15 @@
+from datetime import datetime
+
 class Drone:
-    def __init__(self, id, max_weight, battery, speed, start_pos):
+    def __init__(self, id, max_weight, battery, speed, start_pos, start_time="08:00"):
         self.id = id
-        self.max_weight = max_weight  # in kg
-        self.battery = battery        # in mAh
-        self.speed = speed            # in m/s
-        self.start_pos = start_pos    # tuple (x, y)
-        self.current_pos = start_pos
+        self.max_weight = max_weight
+        self.battery = battery
+        self.speed = speed
+        self.start_pos = start_pos
+        self.current_pos = start_pos.copy()
+        self.start_time = start_time # datetime.strptime(start_time, "%H:%M")
+
 
         # Internal state
         self.available = True

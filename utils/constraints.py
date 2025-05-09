@@ -2,7 +2,7 @@ from shapely.geometry import LineString, Polygon
 from models.drone import Drone
 from models.delivery import Delivery
 from models.no_fly_zone import NoFlyZone
-from utils.helpers import euclidean_distance
+from utils.helpers import euclidean_distance, estimate_arrival_time
 from utils.time import is_within_time_window
 
 from datetime import datetime, timedelta
@@ -54,12 +54,12 @@ def is_valid_assignment(drone: Drone, delivery: Delivery, current_time, no_fly_z
         and not intersects_no_fly_zones(drone.current_pos, delivery.pos, current_time, no_fly_zones)
     )
 
-def check_constraints(individu, drones, deliveries, no_fly_zones):
+def check_constraints(individu, drones, deliveries, no_fly_zones, start_time="08:00"):
     violations = []
     delivery_map = {d.id: d for d in deliveries}
     drone_map = {d.id: d for d in drones}
 
-    drone_time = {f"D{d.id}": datetime.strptime("08:00", "%H:%M") for d in drones}
+    drone_time = {f"D{d.id}": datetime.strptime(d.start_time, "%H:%M") for d in drones}
     drone_pos = {f"D{d.id}": d.current_pos for d in drones}
 
     for drone_id, assigned_ids in individu.items():
@@ -79,31 +79,38 @@ def check_constraints(individu, drones, deliveries, no_fly_zones):
             dist = euclidean_distance(current_pos, delivery.pos)
             battery_used += dist * delivery.weight  # modèle simplifié
             current_pos = delivery.pos
+            #drones[drone_id].pos = current_pos # to be done after a delivery
+
 
             # Calcul du temps de vol
-            speed_m_per_min = (drone.speed * 1000) / 60  # km/h → m/min
-            flight_duration = dist / speed_m_per_min
-            arrival_time = current_time + timedelta(minutes=flight_duration)
+            # speed_m_per_min = (drone.speed * 1000) / 60  # km/h → m/min
+            # flight_duration = dist / speed_m_per_min
+            # arrival_time = current_time + timedelta(minutes=flight_duration)
+
+            arrival_time = estimate_arrival_time(current_time, drone.speed, dist)
+            # print("C",current_time)
+            #print(delivery_id," ",arrival_time)
 
             # Vérification de la plage horaire
             start_time = datetime.strptime(delivery.time_window[0], "%H:%M")
             end_time = datetime.strptime(delivery.time_window[1], "%H:%M")
             if not is_within_time_window(arrival_time, start_time, end_time):
-                violations.append(f"Livraison {delivery_id} hors plage horaire ({delivery.time_window})")
+                violations.append(f"Teslimat {delivery_id} zaman aralığı dışında ({delivery.time_window}) - arrival time estimated to {arrival_time}.")
+            #drones[drone_id].start_time = arrival_time # to be done after a delivery
 
             # Vérification No-Fly Zones
             for zone in no_fly_zones:
                 zone_start = datetime.strptime(zone.active_time[0], "%H:%M")
                 zone_end = datetime.strptime(zone.active_time[1], "%H:%M")
                 if zone.contains(delivery.pos) and is_within_time_window(arrival_time, zone_start, zone_end):
-                    violations.append(f"Drone {drone_id} entre dans une zone interdite active pour livraison {delivery_id}")
+                    violations.append(f"Drone {drone_id} yaasak bolume giriyor, teslimat {delivery_id}")
 
             # Mise à jour du temps courant (+5 minutes de dépôt)
             current_time = arrival_time + timedelta(minutes=5)
 
         # Vérification batterie
         if battery_used > drone.battery:
-            violations.append(f"Drone {drone_id} dépasse la capacité batterie ({battery_used:.1f} > {drone.battery})")
+            violations.append(f"Drone {drone_id} batarya kapasitesi asıyor ({battery_used:.1f} > {drone.battery})")
 
     return (len(violations) == 0), violations
 
