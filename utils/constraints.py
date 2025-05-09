@@ -2,7 +2,7 @@ from shapely.geometry import LineString, Polygon
 from models.drone import Drone
 from models.delivery import Delivery
 from models.no_fly_zone import NoFlyZone
-from utils.helpers import euclidean_distance, estimate_arrival_time
+from utils.helpers import euclidean_distance, estimate_arrival_time, used_energy
 from utils.time import is_within_time_window
 
 from datetime import datetime, timedelta
@@ -77,7 +77,10 @@ def check_constraints(individu, drones, deliveries, no_fly_zones, start_time="08
 
             # Calcul distance et consommation
             dist = euclidean_distance(current_pos, delivery.pos)
-            battery_used += dist * delivery.weight  # modèle simplifié
+            
+            battery_used += used_energy(dist, delivery.weight)  # modèle simplifié
+            #energy_used = dist * energy_per_km * (delivery.weight / drone.max_weight)
+
             current_pos = delivery.pos
             #drones[drone_id].pos = current_pos # to be done after a delivery
 

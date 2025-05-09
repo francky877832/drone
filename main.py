@@ -8,7 +8,7 @@ from ga.population import generate_initial_population, generate_initial_smart_po
 from utils.constraints import check_constraints, check_constraints_with_penality
 from ga.ga import crossover, mutate
 from ga.fitness import compute_fitness 
-
+from algorithms.a_start import astar
 
 
 
@@ -78,5 +78,32 @@ def run_genetic_algorithm(drones, deliveries, no_fly_zones, generations=20, popu
 print("Gelişim başlatılıyor...")
 best_solution = run_genetic_algorithm(drones, deliveries, no_fly_zones)
 print(best_solution)
+
+
+
+grid_width = 100
+grid_height = 100
+
+# The grid can be implicit, or you can represent it like this (optional):
+grid = [[0 for _ in range(grid_width)] for _ in range(grid_height)]
+
+for individual in population:
+        for drone_id, deliveries_for_drone in individual.items():
+            drone = next(d for d in drones if d.id == int(drone_id[1:]))  # Find the drone object
+            
+            for delivery_id in deliveries_for_drone:
+                delivery = next(d for d in deliveries if d.id == delivery_id)  # Find the delivery object
+                
+                # Apply A* to get the optimal path for this drone to this delivery
+                start_pos = drone.current_pos
+                goal_pos = delivery.pos
+                optimal_path = astar(start_pos, goal_pos, drone, no_fly_zones, delivery)
+                
+                # Update drone's route and other relevant data
+                if optimal_path:
+                    print(f"Drone {drone.id} has an optimal route to delivery {delivery.id}: {optimal_path}")
+                    drone.current_pos = goal_pos  # Update drone position after delivery
+                else:
+                    print(f"No optimal path found for Drone {drone.id} to Delivery {delivery.id}")
 
 

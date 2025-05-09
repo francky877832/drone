@@ -12,6 +12,29 @@ def compute_cost(pos1, pos2, weight, priority):
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
+def is_within_no_fly_zone(nx, ny, no_fly_zones):
+    for zone in no_fly_zones :
+        if zone.contains((nx, ny)):
+            return True
+    return False
+
+def has_capacity_for_delivery(drone, delivery):
+    return delivery.weight <= drone.max_weight
+
+
+def used_energy(distance, weight) :
+    return distance * weight
+#energy_used = dist * energy_per_km * (delivery.weight / drone.max_weight)
+
+
+def has_enough_battery_for_move(drone, nx, ny):
+    distance = euclidean_distance(drone.current_pos, (nx, ny))
+    
+    energy_needed = used_energy(distance, drone.max_weight)  # You can use drone.weight if it's available
+    
+    return drone.battery >= energy_needed
+
+
 
 from datetime import datetime, timedelta
 
