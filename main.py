@@ -1,29 +1,57 @@
+import json
+from models.drone import Drone
+from models.delivery import Delivery
+from models.no_fly_zone import NoFlyZone
+from algorithms.graph_builder import build_graph
+from ga.population import generate_initial_population, generate_initial_smart_population
+from utils.constraints import check_constraints, check_constraints_with_penality
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from utils.data_generator import generate_scenario
-from algorithms.a_star import a_star
-from algorithms.csp import CSP
-from algorithms.genetic_algorithm import GeneticAlgorithm
 
-# Générer les données
-drones, deliveries, no_fly_zones = generate_scenario(5, 10, 3)
+with open("scenario1.json", "r") as f:
+    data = json.load(f)
 
-# Test A* (Pathfinding)
-start_pos = (0, 0)
-goal_id = 2  # L'ID du point de livraison cible
-delivery_graph = {}  # Générer un graph de livraison ici
-path, cost = a_star(start_pos, deliveries, delivery_graph, goal_id, no_fly_zones)
-print("Path found by A*:", path, "Total cost:", cost)
+drones = [Drone(**d) for d in data["drones"]]
+deliveries = [Delivery(**d) for d in data["deliveries"]]
+no_fly_zones = [NoFlyZone(**z) for z in data["no_fly_zones"]]
 
-# Test CSP (Constraint Satisfaction Problem)
-csp = CSP(drones, deliveries, no_fly_zones)
-valid_assignments = csp.get_valid_assignments()
-print("Valid assignments from CSP:", valid_assignments)
+# print(drones[0].max_weight)
 
-# Test Algorithme Génétique
-genetic_algo = GeneticAlgorithm(population_size=50, mutation_rate=0.1, generations=100)
-best_solution = genetic_algo.run(drones, deliveries)
-print("Best solution from Genetic Algorithm:", best_solution)
+graph = build_graph(drones[0].start_pos, deliveries)
+
+#print("Graphe généré :", graph)
+
+print("\nGénération de la population initiale...")
+population = generate_initial_population(drones, deliveries, size=5)
+population = generate_initial_smart_population(drones, deliveries, size=5)
+
+
+for i, ind in enumerate(population):
+    print(f"\nIndividu {i+1} :")
+    for drone, tasks in ind.items():
+        print(f"  {drone} → {tasks}")
+
+    is_valid, violations = check_constraints(ind, drones, deliveries, no_fly_zones)
+    print(is_valid)
+    if is_valid:
+        print("Contrainst uygundur.")
+    else:
+        pass
+        print("Contrainsts ihmaldir :")
+        for v in violations:
+            print(f"   - {v}")
+
+#constrainst with penality
+"""for i, ind in enumerate(population):
+    print(f"\nIndividu {i+1} :")
+    for drone, tasks in ind.items():
+        print(f"  {drone} → {tasks}")
+
+    penalty, violations = check_constraints_with_penality(ind, drones, deliveries, no_fly_zones)
+    print("Valide :", penalty == 0)
+    if violations:
+        print("Kısıt ihlalleri:")
+        for v in violations:
+            print(" ", v)
+    else:
+        print("Tüm kısıtlar geçildi.")"""
