@@ -31,7 +31,7 @@ graph = generate_graph(deliveries, no_fly_zones)
 #plot_graph(deliveries, graph, no_fly_zones)
 
 
-start = deliveries[17]
+start = deliveries[0]
 #goal = next(d for d in deliveries if tuple(d.pos)==(94,56))
 goal = deliveries[19]
 drone = drones[2]
@@ -42,7 +42,7 @@ path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
 #print(path)
 #print(len(path))
 plot_graph(deliveries, graph, no_fly_zones)
-plot_path(path)
+plot_path(path, deliveries)
 
 """
 print("\nGénération de la population initiale...")

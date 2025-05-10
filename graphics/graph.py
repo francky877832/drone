@@ -39,8 +39,9 @@ def plot_graph(deliveries, graph, no_fly_zones):
 
 import matplotlib.pyplot as plt
 
-def plot_path(path) :
+def plot_path(path, deliveries) :
     x_coords, y_coords = zip(*path)
+    
 
     # Création du graphique
     plt.figure(figsize=(10, 10))
@@ -50,12 +51,14 @@ def plot_path(path) :
     for i in range(len(path) - 1):
         x_start, y_start = path[i]
         x_end, y_end = path[i + 1]
+
         plt.arrow(x_start, y_start, x_end - x_start, y_end - y_start, 
                 head_width=3, head_length=5, fc='r', ec='r')
 
     # Marquer les points sur le graphe
     for (x, y) in path:
-        plt.text(x, y, f'({x}, {y})', fontsize=9, ha='right')
+        d_id = next((d.id for d in deliveries if tuple(d.pos) == (x, y)), None)
+        plt.text(x, y, f'{d_id}-({x}, {y})', fontsize=9, ha='right')
 
     # Paramètres d'affichage
     plt.title("Visualisation du chemin avec direction")
