@@ -1,6 +1,6 @@
 import heapq
 from datetime import datetime, timedelta
-from utils.helpers import euclidean_distance, is_within_no_fly_zone, has_enough_battery_for_move
+from utils.helpers import euclidean_distance, get_neighbors, is_within_no_fly_zone, has_enough_battery_for_move, apply_penality
 from queue import PriorityQueue
 
 
@@ -10,121 +10,77 @@ grid_height = 100
 # The grid can be implicit, or you can represent it like this (optional):
 grid = [[0 for _ in range(grid_width)] for _ in range(grid_height)]
 
-class State:
-    def __init__(self, position, time, energy_consumed, drone, parent=None):
-        self.position = position
-        self.time = time
-        self.energy_consumed = energy_consumed
-        self.drone = drone
-        self.parent = parent
 
-def get_cost(current_pos, next_pos, drone, delivery):
-    # Calculate the Euclidean distance between current and next positions
-    dist = euclidean_distance(current_pos, next_pos)
-    # Energy consumed (distance * weight of the drone)
-    energy_cost = dist * delivery.weight
-    # Time (distance / speed)
-    time_cost = dist / drone.speed
-    return energy_cost, time_cost
 
-def heuristic(current_pos, goal_pos, no_fly_zones):
-    # Calculate the Euclidean distance to the goal
-    dist = euclidean_distance(current_pos, goal_pos)
-    penalty = 0
+
+def a_star(graph, start, goal, nofly_zones, drone, deliveries):
+    start_pos = tuple(start.pos)
+    goal_pos = tuple(goal.pos)
+    """
+    Algorithme A* pour trouver le chemin optimal en tenant compte des zones interdites et des contraintes du drone.
+    Utilise un graphe pour récupérer les coûts de déplacement entre les nœuds.
+    """
     
-    # Add no-fly zone penalty
-    for zone in no_fly_zones:
-        if zone.contains(current_pos):
-            penalty += 100  # Apply a penalty for no-fly zones
-    
-    return dist + penalty
+    # Fonction heuristique A* (distance à la cible + pénalité de zone interdite)
+    def heuristic(n, target, nofly_zones):
+        distance_to_target = euclidean_distance(n, target)
+        nofly_penalty = apply_penality(n, target, nofly_zones)
+        return distance_to_target + nofly_penalty
 
+    def redraw_path(came_from, start_pos, goal_pos):
+        path = []
+        current_node = goal_pos
+        while current_node != start_pos:
+            path.append(current_node)
+            current_node = came_from.get(current_node)  # Obtenez le nœud précédent
+            
+            if current_node is None:
+                print("Chemin non trouvé !")
+                return []  # Si on ne trouve pas de chemin, retour vide
 
-import heapq
+        path.append(start_pos)  # Ajouter le point de départ à la fin
+        return path[::-1]  # Retourner le chemin dans l'ordre correct
 
-def astar(start_pos, goal_pos, drone, no_fly_zones, delivery):
-    start_pos = tuple(start_pos)
-    open_list = PriorityQueue()
-    open_list.put((0, start_pos))  # Start node with initial cost of 0
+    # Open set (priorité de la file d'attente)
+    open_set = []
+    heapq.heappush(open_set, (0 + heuristic(start_pos, goal_pos, nofly_zones), 0, start_pos))  # (f, g, n)
+
+    # Dictionnaires pour garder une trace des coûts et des parents
+    g_scores = {start_pos: 0}  # Coût depuis le point de départ
     came_from = {}
-    print(start_pos)
-    g_score = {start_pos: 0}
-    f_score = {start_pos: heuristic(start_pos, goal_pos, no_fly_zones)}  # f(n) = g(n) + h(n)
-    
-    closed_list = set()  # This will store visited nodes as tuples (hashable)
-    
-    while not open_list.empty():
-        _, current_pos = open_list.get()
 
-        if current_pos == goal_pos:
-            return reconstruct_path(came_from, current_pos)
-        
-        closed_list.add(tuple(current_pos))  # Convert current_pos to a tuple before adding
-        
-        for neighbor in get_neighbors(current_pos, drone, no_fly_zones):
-            if tuple(neighbor) in closed_list:  # Check if neighbor has already been visited
-                continue
+    while open_set:
+        _, current_cost, current_node = heapq.heappop(open_set)
 
-            energy_cost, time_cost = get_cost(current_pos, neighbor, drone, delivery)
-            tentative_g_score = g_score[current_pos] + energy_cost
+        # Si on arrive au but (livraison)
+        if current_node == goal_pos:
+            # Utilisation de redraw_path pour obtenir le chemin final
+            return redraw_path(came_from, start_pos, goal_pos)
 
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                came_from[neighbor] = current_pos
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal_pos, no_fly_zones)
-                open_list.put((f_score[neighbor], neighbor))
+        # Exploration des voisins du graphe
+        for neighbor_pos, cost in graph[tuple(current_node)].items():
+            neighbor = next((dp for dp in deliveries if tuple(dp.pos) == neighbor_pos), None)
+            # Vérification du poids du voisin
+            if neighbor.weight <= drone.max_weight:
+                battery_needed = euclidean_distance(current_node, neighbor_pos) * 2 / drone.speed  # Aller-retour ##time
+                if battery_needed <= drone.battery:
+                    penality = apply_penality(current_node, neighbor_pos, nofly_zones)
+                    tentative_g_score = current_cost + cost + penality
+                    
+                    # Si le voisin n'a pas encore été exploré ou si son score est meilleur
+                    if tuple(neighbor_pos) not in g_scores or tentative_g_score < g_scores[tuple(neighbor_pos)]:
+                        came_from[tuple(neighbor_pos)] = current_node
+                        g_scores[tuple(neighbor_pos)] = tentative_g_score
+                        #f_score = tentative_g_score + heuristic(neighbor_pos, goal_pos, nofly_zones)
+                        f_score = tentative_g_score + euclidean_distance(neighbor_pos, goal_pos)
 
-    return None  # If no path is found
+                        
+                        # Si le voisin n'est pas dans open_set ou qu'il a un meilleur score, on l'ajoute
+                        #if not any(neighbor_pos == n[2] for n in open_set):
+                        heapq.heappush(open_set, (f_score, tentative_g_score, neighbor_pos))
+            
+        # Debug: vérifier ce qui est ajouté à open_set et came_from
+        # print("Open set:", open_set)
+        # print("Came from:", came_from)
 
-
-
-def reconstruct_path(parent_map, end_state):
-    path = []
-    current_state = end_state
-    while current_state in parent_map:
-        path.append(current_state)
-        current_state = parent_map[current_state]
-    path.reverse()
-    return path
-
-
-def get_neighbors(current_pos, drone, no_fly_zones):
-    # Assuming the drone moves in 4 directions (up, down, left, right)
-    neighbors = []
-    
-    # Get current x, y position
-    x, y = current_pos
-    
-    # List of potential movements (4 directions)
-    potential_neighbors = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
-
-    # For each potential neighbor, check if it's valid
-    for nx, ny in potential_neighbors:
-        if is_valid_position(nx, ny, drone, no_fly_zones):
-            neighbors.append((nx, ny))
-    
-    return neighbors
-
-
-def is_valid_position(nx, ny, drone, no_fly_zones):
-    # nx = delivery.pos[0]
-    # ny = delivery.pos[1]
-    # 1. Check if the position is within the grid bounds
-    if not (0 <= nx < grid_width and 0 <= ny < grid_height):
-        return False
-
-    # 2. Check if the position is within any no-fly zone
-    if is_within_no_fly_zone(nx, ny, no_fly_zones):
-        return False
-
-    # 3. Check if the drone can physically reach the position (e.g., within energy and weight limits)
-    if not has_enough_battery_for_move(drone, nx, ny):
-        return False
-    
-
-
-    # Additional checks (optional) can be added here, for example:
-    # - Collision avoidance (if other obstacles exist)
-    # - Checking for wind conditions, etc.
-    
-    return True
+    return None  # Si aucun chemin trouvé

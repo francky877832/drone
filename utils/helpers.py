@@ -3,14 +3,78 @@ import math
 from utils.time import is_within_time_window
 
 
-def compute_cost(pos1, pos2, weight, priority):
+def compute_base_cost(pos1, pos2, weight, priority):
     distance = dist(pos1, pos2)
     return distance * weight + priority * 100
 
 
-
 def euclidean_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def heuristic(n, target, nofly_zones):
+    distance_to_target = euclidean_distance(n.pos, target.pos)
+    
+    nofly_penalty = 0
+    for zone in nofly_zones:
+        if zone.contains(n.pos) or zone.contains(target.pos):
+            nofly_penalty += 1000  # Pénalité à ajouter si le point est dans la zone interdite
+    
+    return distance_to_target + nofly_penalty
+
+
+
+def compute_cost(start_node, end_node, weight, priority, nofly_zones):
+    distance = euclidean_distance(start_node, end_node) 
+    base_cost = compute_base_cost(start_node, end_node, weight, priority)
+    penalty = 0
+    if not is_valid_move(start_node, end_node, nofly_zones):
+        penalty = 1000  # Pénalité si le chemin traverse une zone interdite
+    total_cost = base_cost + penalty
+    return total_cost
+
+
+def get_neighbors(current_node, graph):
+    neighbors = []
+    for neighbor, cost in graph.get(current_node, []):
+        print(f"Neighbor: {neighbor}, Cost: {cost}")
+        neighbors.append(neighbor)
+    return neighbors
+
+
+def is_valid_move(start_node, end_node, nofly_zones):
+    """Vérifie si un mouvement entre start_node et end_node est valide (ne traverse pas une zone interdite)."""
+    path = [start_node, end_node]
+    
+    for zone in nofly_zones:
+        for point in path:
+            if zone.contains(point): 
+                return False
+    
+    return True
+
+
+from shapely.geometry import LineString, Polygon
+
+def apply_penality(start_node, end_node, nofly_zones):
+    """Vérifie si un mouvement entre start_node et end_node traverse une zone interdite."""
+    path = LineString([start_node, end_node]) 
+    penality = 0
+    for zone in nofly_zones:
+
+        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
+            # print("penality", start_node, end_node)
+            penality += 10000
+    
+    return penality
+
+
+
+
+
+
+
+
+
 
 def is_within_no_fly_zone(nx, ny, no_fly_zones):
     for zone in no_fly_zones :

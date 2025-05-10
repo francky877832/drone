@@ -12,9 +12,9 @@ delivery_timedelta_hours = 10
 delivery_hours_start = 8      # Livraisons commencent à 08:00
 delivery_hours_end = 18       # Fin des livraisons à 18:00
 
-num_nfz = 2
-nfz_hours_start = 11          # Zones actives de 11h à 12h (heures critiques comme pause déjeuner ou école)
-nfz_hours_end = 12
+num_nfz = 3
+nfz_hours_start = 0         # Zones actives de 11h à 12h (heures critiques comme pause déjeuner ou école)
+nfz_hours_end = 23
 no_fly_zones_vertices = 4     # Carré ou rectangle pour plus de réalisme
 
 
