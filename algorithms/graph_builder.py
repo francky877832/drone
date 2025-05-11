@@ -17,7 +17,7 @@ def build_graph(start_pos, deliveries):
     return graph
 
 
-def generate_graph(delivery_points, no_fly_zones):
+def generate_complete_graph(delivery_points):
     graph = {}  # Dictionnaire pour le graphe (pos1 → {pos2: cost})
     
     for from_point in delivery_points:
@@ -28,3 +28,70 @@ def generate_graph(delivery_points, no_fly_zones):
                 graph[tuple(from_point.pos)][tuple(to_point.pos)] = cost
     
     return graph
+
+
+
+
+def generate_oriented_sparse_graph(delivery_points, k=3):
+
+    graph = {}  # Format : {pos1: {pos2: coût}}
+
+    for from_point in delivery_points:
+        from_pos = tuple(from_point.pos)
+        distances = []
+
+        # Calculer les distances vers tous les autres points
+        for to_point in delivery_points:
+            to_pos = tuple(to_point.pos)
+            if from_pos != to_pos:
+                d = euclidean_distance(from_pos, to_pos)
+                distances.append((d, to_point))
+
+        # Garder les k plus proches voisins
+        distances.sort(key=lambda x: x[0])
+        k_nearest = distances[:k]
+
+        graph[from_pos] = {}
+        for _, to_point in k_nearest:
+            to_pos = tuple(to_point.pos)
+            cost = compute_base_cost(from_pos, to_pos, to_point.weight, to_point.priority)
+            graph[from_pos][to_pos] = cost
+
+    return graph
+
+
+def generate_sparse_graph(delivery_points, k=3):
+    graph = {}  # Format: {pos1: {pos2: cost}}
+
+    for from_point in delivery_points:
+        from_pos = tuple(from_point.pos)
+        distances = []
+
+        # Calculate distances to all other points
+        for to_point in delivery_points:
+            to_pos = tuple(to_point.pos)
+            if from_pos != to_pos:
+                d = euclidean_distance(from_pos, to_pos)
+                distances.append((d, to_point))
+
+        # Keep the k closest neighbors
+        distances.sort(key=lambda x: x[0])
+        k_nearest = distances[:k]
+
+        # Add edges for the k nearest neighbors (undirected)
+        for _, to_point in k_nearest:
+            to_pos = tuple(to_point.pos)
+            cost = compute_base_cost(from_pos, to_pos, to_point.weight, to_point.priority)
+            
+            # Add edge from 'from_pos' to 'to_pos' and vice versa for undirected graph
+            if from_pos not in graph:
+                graph[from_pos] = {}
+            if to_pos not in graph:
+                graph[to_pos] = {}
+
+            graph[from_pos][to_pos] = cost
+            graph[to_pos][from_pos] = cost  # Reverse the direction for undirected
+
+    return graph
+
+

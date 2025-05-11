@@ -3,13 +3,13 @@ import random
 from models.drone import Drone
 from models.delivery import Delivery
 from models.no_fly_zone import NoFlyZone
-from algorithms.graph_builder import build_graph, generate_graph
+from algorithms.graph_builder import build_graph, generate_complete_graph, generate_sparse_graph, generate_oriented_sparse_graph
 from ga.population import generate_initial_population, generate_initial_smart_population
 from utils.constraints import check_constraints, check_constraints_with_penality
 from ga.ga import crossover, mutate
 from ga.fitness import compute_fitness 
 from algorithms.a_start import a_star
-from graphics.graph import plot_graph, plot_path
+from graphics.graph import plot_graph, plot_path, plot_combined_graph_and_path, plot_oriented_graph, plot_combined_oriented_graph_and_path
 
 
 
@@ -23,26 +23,30 @@ population_size = len(drones)
 
 # print(drones[0].max_weight)
 
-graph = build_graph(drones[0].start_pos, deliveries)
-graph = generate_graph(deliveries, no_fly_zones)
+#complete_graph = build_graph(drones[0].start_pos, deliveries)
+graph = generate_complete_graph(deliveries)
+graph = generate_oriented_sparse_graph(deliveries, 3)
+#graph = generate_sparse_graph(deliveries, 3)
 
 # print("Graphe généré :", graph)
 
 #plot_graph(deliveries, graph, no_fly_zones)
 
 
-start = deliveries[0]
+start = deliveries[16]
 #goal = next(d for d in deliveries if tuple(d.pos)==(94,56))
 goal = deliveries[19]
 drone = drones[2]
-
+#print(graph[tuple(start.pos)][tuple(goal.pos)])
 # graph[tuple(start.pos)][tuple(goal.pos)] = 12000000
+
 print(start.pos, goal.pos)
 path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
 #print(path)
 #print(len(path))
-plot_graph(deliveries, graph, no_fly_zones)
-plot_path(path, deliveries)
+# plot_graph(deliveries, graph, no_fly_zones)
+# plot_path(path, deliveries)
+plot_combined_oriented_graph_and_path(deliveries, graph, no_fly_zones, path)
 
 """
 print("\nGénération de la population initiale...")

@@ -55,7 +55,7 @@ def is_valid_move(start_node, end_node, nofly_zones):
 
 from shapely.geometry import LineString, Polygon
 
-def apply_penality(start_node, end_node, nofly_zones):
+def apply_fixed_penality(start_node, end_node, nofly_zones):
     """Vérifie si un mouvement entre start_node et end_node traverse une zone interdite."""
     path = LineString([start_node, end_node]) 
     penality = 0
@@ -66,6 +66,35 @@ def apply_penality(start_node, end_node, nofly_zones):
             penality += 10000
     
     return penality
+
+
+from shapely.geometry import LineString, Polygon
+
+def apply_penality(start_node, end_node, nofly_zones, cost_per_meter=10000):
+    path = LineString([start_node, end_node])
+    penalty = 0
+
+    for zone in nofly_zones:
+        if not zone.polygon.is_valid:
+            # print("Invalid Polygon!")
+            zone.polygon = zone.polygon.buffer(0)
+
+        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
+            intersection = path.intersection(zone.polygon)
+
+            # Handle both LineString and MultiLineString results
+            if not intersection.is_empty:
+                if intersection.geom_type == 'LineString':
+                    penalized_length = intersection.length
+                elif intersection.geom_type == 'MultiLineString':
+                    penalized_length = sum(line.length for line in intersection.geoms)
+                else:
+                    penalized_length = 0
+
+                penalty += math.ceil(penalized_length) * cost_per_meter*50000000
+                # print(f"Penalty applied between {start_node} and {end_node}: {penalized_length:.2f} m")
+
+    return penalty
 
 
 
