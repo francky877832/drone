@@ -74,7 +74,7 @@ population_size = 10
 population = generate_initial_population(drones, deliveries, size=population_size)
 best_individuals = []
 # Run the GA for a number of generations
-for generation in range(10):  # Number of generations
+for generation in range(2):  # Number of generations
     print(f"Generation {generation}")
     
     # Evaluate the fitness of the population
@@ -91,17 +91,18 @@ for generation in range(10):  # Number of generations
 
 
 best_individual = max(best_individuals, key=lambda x : x[1])
-print(f"BEST INDIVIDUAL AMONG ALL GENERATION : {best_individual[0]} => {best_individual[1]} ")
+print(f"\nBEST INDIVIDUAL AMONG ALL GENERATION : {best_individual[0]} => {best_individual[1]}.\n")
 
 best_deliveries = [d for d in deliveries for i in best_individual[0].values() if d.id in i]
 #best_deliveries_sorted = sorted(best_deliveries, key=lambda d: d.priority, reverse=True)  # Sort by priority (highest first)
-
+# print(best_deliveries)
 delivery_heap = []
 for delivery in best_deliveries:
-        heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop return the smallest element
+    heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop return the smallest element
 
 
 plot_path = []
+
 for i in range(len(delivery_heap)) :
     delivery = heapq.heappop(delivery_heap)
     delivery = delivery[1]
@@ -121,7 +122,8 @@ end_time = time.time()
 
 print(f"Verimlilik :  {end_time-start_time} seconds.\n")
 
-for path in range(len(delivery_heap)) :
+for path in plot_path :
+    # print(path)
     plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
 # for i in range(12) :
 #     print(f"\nSimulation {i+1}")
