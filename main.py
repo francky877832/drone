@@ -6,7 +6,7 @@ from models.delivery import Delivery
 from models.no_fly_zone import NoFlyZone
 from algorithms.graph_builder import build_graph, generate_complete_graph, generate_sparse_graph, generate_oriented_sparse_graph
 from ga.population import generate_initial_population, generate_initial_smart_population
-from utils.constraints import check_constraints, check_constraints_with_penality
+
 from ga.ga import crossover, mutate
 from ga.fitness import compute_fitness 
 from algorithms.a_start import a_star
@@ -52,7 +52,7 @@ delivery_heap = []
 for delivery in deliveries:
         heapq.heappush(delivery_heap, delivery)
 
-for i in range(5) :
+for i in range(12) :
         print(f"\nSimulation {i+1}")
         path = simulate(graph, drones, deliveries, no_fly_zones, delivery_heap)
         plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)

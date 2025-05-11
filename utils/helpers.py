@@ -4,6 +4,8 @@ from utils.time import is_within_time_window
 
 import random
 
+fixed_penality = 100
+
 def initialize_drones_on_graph(delivery_points, drones):
     delivery_positions = [tuple(d.pos) for d in delivery_points]
     for drone in drones:
@@ -27,10 +29,55 @@ def heuristic(n, target, nofly_zones):
     nofly_penalty = 0
     for zone in nofly_zones:
         if zone.contains(n.pos) or zone.contains(target.pos):
-            nofly_penalty += 1000  # Pénalité à ajouter si le point est dans la zone interdite
+            nofly_penalty += fixed_penality  # Pénalité à ajouter si le point est dans la zone interdite
     
     return distance_to_target + nofly_penalty
 
+
+
+from shapely.geometry import LineString, Polygon
+
+def apply_fixed_penality(start_node, end_node, nofly_zones):
+    """Vérifie si un mouvement entre start_node et end_node traverse une zone interdite."""
+    path = LineString([start_node, end_node]) 
+    penality = 0
+    for zone in nofly_zones:
+
+        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
+            # print("penality", start_node, end_node)
+            penality += fixed_penality
+    
+    return penality
+
+
+from shapely.geometry import LineString, Polygon
+
+def apply_penality(start_node, end_node, nofly_zones, cost_per_meter=fixed_penality):
+    #print(cost_per_meter)
+    path = LineString([start_node, end_node])
+    penalty = 0
+
+    for zone in nofly_zones:
+        if not zone.polygon.is_valid:
+            # print("Invalid Polygon!")
+            zone.polygon = zone.polygon.buffer(0)
+
+        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
+            intersection = path.intersection(zone.polygon)
+
+            # Handle both LineString and MultiLineString results
+            if not intersection.is_empty:
+                if intersection.geom_type == 'LineString':
+                    penalized_length = intersection.length
+                elif intersection.geom_type == 'MultiLineString':
+                    penalized_length = sum(line.length for line in intersection.geoms)
+                else:
+                    penalized_length = 0
+
+                penalty += math.ceil(penalized_length) * cost_per_meter
+                # print(f"Penalty applied between {start_node} and {end_node}: {penalized_length:.2f} m")
+
+    return penalty
 
 
 def compute_cost(start_node, end_node, weight, priority, nofly_zones):
@@ -38,9 +85,30 @@ def compute_cost(start_node, end_node, weight, priority, nofly_zones):
     base_cost = compute_base_cost(start_node, end_node, weight, priority)
     penalty = 0
     if not is_valid_move(start_node, end_node, nofly_zones):
-        penalty = 1000  # Pénalité si le chemin traverse une zone interdite
+        penalty = apply_penality(start_node, end_node, nofly_zones, fixed_penality)
     total_cost = base_cost + penalty
     return total_cost
+
+
+
+from datetime import datetime
+
+def is_within_time_window(current_time_str, time_window):
+    current_time = datetime.strptime(current_time_str, "%H:%M").time()
+    start_time = datetime.strptime(time_window[0], "%H:%M").time()
+    end_time = datetime.strptime(time_window[1], "%H:%M").time()
+
+    return start_time <= current_time <= end_time
+
+
+
+
+
+
+def get_battery_needed(drone, delivery):
+    distance_to_delivery = euclidean_distance(drone.current_pos, delivery.pos)
+    battery_needed = distance_to_delivery * 2 / drone.speed # roud-trip
+    return battery_needed
 
 
 def get_neighbors(current_node, graph):
@@ -63,58 +131,12 @@ def is_valid_move(start_node, end_node, nofly_zones):
     return True
 
 
-from shapely.geometry import LineString, Polygon
-
-def apply_fixed_penality(start_node, end_node, nofly_zones):
-    """Vérifie si un mouvement entre start_node et end_node traverse une zone interdite."""
-    path = LineString([start_node, end_node]) 
-    penality = 0
-    for zone in nofly_zones:
-
-        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
-            # print("penality", start_node, end_node)
-            penality += 10000
-    
-    return penality
-
-
-from shapely.geometry import LineString, Polygon
-
-def apply_penality(start_node, end_node, nofly_zones, cost_per_meter=10000):
-    path = LineString([start_node, end_node])
-    penalty = 0
-
-    for zone in nofly_zones:
-        if not zone.polygon.is_valid:
-            # print("Invalid Polygon!")
-            zone.polygon = zone.polygon.buffer(0)
-
-        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
-            intersection = path.intersection(zone.polygon)
-
-            # Handle both LineString and MultiLineString results
-            if not intersection.is_empty:
-                if intersection.geom_type == 'LineString':
-                    penalized_length = intersection.length
-                elif intersection.geom_type == 'MultiLineString':
-                    penalized_length = sum(line.length for line in intersection.geoms)
-                else:
-                    penalized_length = 0
-
-                penalty += math.ceil(penalized_length) * cost_per_meter*50000000
-                # print(f"Penalty applied between {start_node} and {end_node}: {penalized_length:.2f} m")
-
-    return penalty
 
 
 
 
 
 
-def get_battery_needed(drone, delivery):
-    distance_to_delivery = euclidean_distance(drone.current_pos, delivery.pos)
-    battery_needed = distance_to_delivery * 2 / drone.speed # roud-trip
-    return battery_needed
 
 
 
@@ -144,11 +166,16 @@ def has_enough_battery_for_move(drone, nx, ny):
 
 from datetime import datetime, timedelta
 
+def estimate_arrival_time(start_time_str, distance, speed):
 
-def estimate_arrival_time(drone_start_time, drone_speed_kmh, distance_km):
-    # Convertir vitesse en km/h → temps en minutes
-    if isinstance(drone_start_time, str):
-        drone_start_time = datetime.strptime(drone_start_time, "%H:%M")
-    travel_minutes = (distance_km / drone_speed_kmh) * 60
-    return drone_start_time + timedelta(minutes=travel_minutes)
+    start_time = datetime.strptime(start_time_str, "%H:%M")
 
+    travel_time_seconds = distance*100 / speed #distance is in cm
+    # print(start_time)
+    # print(distance)
+    
+    
+    arrival_time = start_time + timedelta(seconds=travel_time_seconds)
+    arrival_time = start_time + timedelta(hours=travel_time_seconds)
+    
+    return arrival_time.strftime("%H:%M")

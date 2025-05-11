@@ -8,11 +8,12 @@ class Drone:
         self.speed = speed
         self.start_pos = start_pos
         self.current_pos = start_pos.copy()
+        self.carrying_weight = 0.0
+
         self.start_time = start_time # datetime.strptime(start_time, "%H:%M")
 
 
         self.current_battery = battery
-        self.carrying_weight = 0.0
 
         self.recharge_time = 0 
         self.is_recharging = False
@@ -20,7 +21,7 @@ class Drone:
 
 
     def is_available(self):
-        return not self.is_recharging
+        return not self.is_recharging and self.carrying_weight==0.0
 
     def start_recharge(self):
         self.is_recharging = True
