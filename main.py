@@ -1,5 +1,6 @@
 import json
 import random
+import time
 import heapq
 from models.drone import Drone
 from models.delivery import Delivery
@@ -15,6 +16,8 @@ from utils.simulate_delivery import simulate_all, simulate_for_signle_delivery
 from utils.helpers import initialize_drones_on_graph
 
 
+
+start_time = time.time()
 
 with open("scenario1.json", "r") as f:
     data = json.load(f)
@@ -65,12 +68,13 @@ def check_empty_population(population):
 
 check_empty_population(population)
 
+
 # Initialize the population
 population_size = 10
 population = generate_initial_population(drones, deliveries, size=population_size)
 best_individuals = []
 # Run the GA for a number of generations
-for generation in range(1):  # Number of generations
+for generation in range(10):  # Number of generations
     print(f"Generation {generation}")
     
     # Evaluate the fitness of the population
@@ -97,6 +101,7 @@ for delivery in best_deliveries:
         heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop return the smallest element
 
 
+plot_path = []
 for i in range(len(delivery_heap)) :
     delivery = heapq.heappop(delivery_heap)
     delivery = delivery[1]
@@ -105,11 +110,19 @@ for i in range(len(delivery_heap)) :
         if delivery.id in delivery_list:
             assigned_drone = drone_obj = next((d for d in drones if f"D{d.id}" == drone_id), None)
             break
-    #print(assigned_drone)
+    
     path = simulate_for_signle_delivery(graph, assigned_drone, delivery, deliveries, no_fly_zones)
-    plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
+    plot_path.append(path)
+    
     print("\n")
 
+end_time = time.time()
+
+
+print(f"Verimlilik :  {end_time-start_time} seconds.\n")
+
+for path in range(len(delivery_heap)) :
+    plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
 # for i in range(12) :
 #     print(f"\nSimulation {i+1}")
 #     path = simulate_for_signle_delivery(graph, drones, best_deliveries, no_fly_zones, delivery_heap)

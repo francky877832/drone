@@ -55,8 +55,9 @@ def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zone
     available_drone.start_time = start_time.strftime("%H:%M")
 
     available_drone.current_weight = 0
-    drone.decrement_recharge_time()
-    drone.is_available = True
+    available_drone.decrement_recharge_time()
+    available_drone.is_recharging = False
+    available_drone.carrying_weight = 0.0
 
 
 
