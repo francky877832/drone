@@ -48,4 +48,22 @@ def check_all_csp(start, goal, drone, delivery, needed_cost):
         print(f"CSP Violation 1 -  Drone {drone.id} is not available. Re-adding to queue.")
         #csp4 - no fkyzone, penality is added
     return None
+    
+
+
+
+def check_all_csp_for_violation(start, goal, drone, delivery, needed_cost):
+    #cCSP CHECKIMG BEOFRE ASSIGNATION
+    estimated_arrival_time = estimate_arrival_time(drone.start_time, euclidean_distance(start.pos, goal.pos), drone.speed) 
+    violations = 0
+    if  not check_single_delivery_per_trip(drone) and not check_drone_recharging(drone) :
+        violations += 1
+    if not check_drone_can_support_cost(drone, needed_cost):
+        violations += 1
+    if not check_drone_can_support_weigth(drone, delivery) :
+        violations += 1
+    if chech_drone_is_within_time_window(estimated_arrival_time, delivery):
+        violations += 1
+
+    return violations
         

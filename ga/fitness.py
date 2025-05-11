@@ -2,67 +2,77 @@ import random
 from datetime import datetime, timedelta
 from utils.helpers import euclidean_distance, estimate_arrival_time
 from utils.time import is_within_time_window
+from utils.constraints import check_all_csp, check_all_csp_for_violation
+from algorithms.a_start import a_star
+
+from datetime import datetime, timedelta
 
 
-def compute_fitness(individu, drones, deliveries, no_fly_zones, drone_current_time="08:00"):
-    delivery_map = {d.id: d for d in deliveries}
-    drone_map = {d.id: d for d in drones}
-    total_deliveries = 0
+
+
+def evaluate_individual(individual, graph, no_fly_zones, drones, deliveries):
     total_energy = 0
     total_violations = 0
-    all_violations = []
+    successful_deliveries = 0
 
-    for drone_id, assigned_ids in individu.items():
-        drone = drone_map[int(drone_id[1:])]
-        energy_used = 0
+    for drone_id, delivery_sequence in individual.items():
 
-        for delivery_id in assigned_ids:
-            delivery = delivery_map[delivery_id]
-            violation = False
+        drone = next(d for d in drones if f"D{d.id}" == drone_id)
+        drone.reset() 
 
-            # Vérification du poids
-            if delivery.weight > drone.max_weight:
+        for delivery_id in delivery_sequence:
+            delivery = next(d for d in deliveries if d.id == delivery_id) 
+            needed_cost = 0
+            path = []
+
+            try:
+                start = next(d for d in deliveries if tuple(d.pos) == tuple(drone.start_pos))
+                goal = next(d for d in deliveries if tuple(d.pos) == tuple(delivery.pos))
+            except StopIteration:
                 total_violations += 1
-                all_violations.append(f"Drone {drone_id} teslimat için aşırı yükü  {delivery_id}")
-                violation = True
+                continue
 
-            # Distance & énergie
-            dist = euclidean_distance(drone.current_pos, delivery.pos)
-            energy = dist * delivery.weight
-            energy_used += energy
-
-            # Estimation de l'heure d'arrivée
-            now = estimate_arrival_time(drone.start_time, drone.speed, dist)
-            start_time = datetime.strptime(delivery.time_window[0], "%H:%M")
-            end_time = datetime.strptime(delivery.time_window[1], "%H:%M")
-            #print(delivery_id, " " ,now)
-            if not is_within_time_window(now, start_time, end_time):
+            path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
+            if not path:
                 total_violations += 1
-                all_violations.append(f"Teslimat {delivery_id} zaman aralığı dışında ({delivery.time_window}) - {drone.start_time}")
-                violation = True
+                continue
 
-            # Vérification des No-Fly Zones
-            for zone in no_fly_zones:
-                zone_start = datetime.strptime(zone.active_time[0], "%H:%M")
-                zone_end = datetime.strptime(zone.active_time[1], "%H:%M")
-                if zone.contains(delivery.pos) and is_within_time_window(now, zone_start, zone_end):
-                    total_violations += 1
-                    all_violations.append(f"Drone {drone_id}, teslimat {delivery_id} sırasında yasaklı bölgeye girdi")
-                    violation = True
+            for i in range(len(path)-1):
+                needed_cost += graph[path[i]][path[i+1]]
 
-            # Livraison réussie
-            if not violation:
-                total_deliveries += 1
-                drone.current_pos = delivery.pos
-                drone.start_time = datetime.strftime(now, "%H:%M")
+            total_violations += check_all_csp_for_violation(start, goal, drone, delivery, needed_cost)
 
-        # Vérification batterie
-        if energy_used > drone.battery:
-            total_violations += 1
-            all_violations.append(f"Drone {drone_id} pil sınırını aştı ({energy_used:.2f} > {drone.battery})")
+            # Simuler la livraison
+            drone.current_weight = delivery.weight
+            drone.move(delivery.pos)
+            drone.update_battery(needed_cost)
+            delivery.complete()
 
-        total_energy += energy_used
+            drone.start_recharge(1000)
 
-    # Calcul du fitness
-    fitness = (50 * total_deliveries) - (0.1 * total_energy) - (1000 * total_violations)
-    return fitness, all_violations
+            estimated_arrival_time = estimate_arrival_time(
+                drone.start_time,
+                euclidean_distance(start.pos, goal.pos),
+                drone.speed
+            )
+
+            try:
+                arrival_time = datetime.strptime(estimated_arrival_time, "%H:%M")
+            except:
+                total_violations += 1
+                continue
+
+            time_to_charge = timedelta(minutes=drone.recharge_time)
+            time_to_deliver = timedelta(minutes=drone.current_weight * 0.1)
+
+            drone.start_time = (arrival_time + time_to_charge + time_to_deliver).strftime("%H:%M")
+
+            drone.current_weight = 0
+            drone.decrement_recharge_time()
+            drone.is_recharging = False
+
+            total_energy += needed_cost
+            successful_deliveries += 1
+
+    fitness = (successful_deliveries * 50) - (total_energy * 0.1) - (total_violations * 1000)
+    return fitness

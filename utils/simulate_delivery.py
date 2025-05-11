@@ -4,7 +4,70 @@ from utils.helpers import get_battery_needed, compute_cost, is_within_time_windo
 from algorithms.a_start import a_star
 from utils.constraints import check_all_csp
 
-def simulate(graph, drones, deliveries, no_fly_zones, delivery_heap):
+from datetime import datetime, timedelta
+
+
+
+def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zones):
+  
+
+    print(f"Simlation for delivery : {delivery.id} - priority : {delivery.priority}")
+
+    # Chercher un drone disponible
+    available_drone = drone
+    needed_cost = 0
+    path = None
+     
+          
+    #compute needed energy = cost
+    start = next(d for d in deliveries if tuple(d.pos) == tuple(drone.start_pos))
+    goal = next(d for d in deliveries if tuple(d.pos) == tuple(delivery.pos))
+    
+    #this cost already tookm in consideration the penality
+    path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
+    for i in range(len(path)-1) :
+        needed_cost += graph[path[i]][path[i+1]]
+        
+    check_all_csp(start, goal, drone, delivery, needed_cost)
+
+
+
+    # update drone before delivery
+    available_drone.current_weight = delivery.weight #CSP 1 drone = 1 delivery
+
+        # update drone after delivery
+    available_drone.move(delivery.pos) #position
+
+    available_drone.update_battery(needed_cost)
+    delivery.complete() 
+
+
+    available_drone.start_recharge(1000) #1000mA
+
+        #start_time
+    estimated_arrival_time = estimate_arrival_time(available_drone.start_time, euclidean_distance(start.pos, goal.pos), available_drone.speed) 
+        
+    arrival_time = datetime.strptime(estimated_arrival_time, "%H:%M")
+    time_to_charge = timedelta(minutes=available_drone.recharge_time)
+    time_to_deliver = timedelta(minutes=available_drone.current_weight*0.1) #estimation
+
+    start_time = arrival_time + time_to_charge + time_to_deliver
+    available_drone.start_time = start_time.strftime("%H:%M")
+
+    available_drone.current_weight = 0
+    drone.decrement_recharge_time()
+    drone.is_available = True
+
+
+
+    return path
+
+
+
+
+
+
+def simulate_all(graph, drones, deliveries, no_fly_zones, delivery_heap):
     # Simulation - on itère tant qu'il y a des livraisons
     tick_count = 0
     max_ticks = 100  # Limite de temps pour éviter une boucle infinie
@@ -44,28 +107,31 @@ def simulate(graph, drones, deliveries, no_fly_zones, delivery_heap):
 
         # update drone before delivery
         available_drone.current_weight = delivery.weight #CSP 1 drone = 1 delivery
-        #start_time
-
 
         # update drone after delivery
         available_drone.move(delivery.pos) #position
-        available_drone.current_weight = 0
 
         available_drone.update_battery(needed_cost)
         delivery.complete() 
 
-        #recharge drone
-        available_drone.start_recharge()
 
-        #return path for plot
+        available_drone.start_recharge(1000) #1000mA
+
+        #start_time
+        estimated_arrival_time = estimate_arrival_time(available_drone.start_time, euclidean_distance(start.pos, goal.pos), available_drone.speed) 
         
+        arrival_time = datetime.strptime(estimated_arrival_time, "%H:%M")
+        time_to_charge = timedelta(minutes=available_drone.recharge_time)
+        time_to_deliver = timedelta(minutes=available_drone.current_weight*0.1) #estimation
 
-        # recharge drones
-        for drone in drones:
-            drone.decrement_recharge_time()
+        start_time = arrival_time + time_to_charge + time_to_deliver
+        available_drone.start_time = start_time.strftime("%H:%M")
 
-        # Simuler un tick de temps
-        sleep(1)  # Simulate 1 second tick
+        available_drone.current_weight = 0
+        drone.decrement_recharge_time()
+        drone.is_available = True
+
+
         tick_count += 1
 
         return path

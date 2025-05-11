@@ -19,13 +19,21 @@ class Drone:
         self.is_recharging = False
         self.delivery_in_progress = None 
 
+    def reset(self) :
+        self.current_pos = self.start_pos
+        self.carrying_weight = 0.0
+        self.carrying_weight = 0.0
+        self.current_battery =self.battery
+        self.recharge_time = 0 
+        self.is_recharging = False
+        self.delivery_in_progress = None
 
     def is_available(self):
         return not self.is_recharging and self.carrying_weight==0.0
 
-    def start_recharge(self):
+    def start_recharge(self, charger_capacity):
         self.is_recharging = True
-        self.recharge_time = self.battery * 0.1  # Par exemple 10% du temps de batterie nécessaire pour la recharge
+        self.recharge_time = ((self.battery - self.current_battery) / charger_capacity) * 60 #in minutes
 
     def decrement_recharge_time(self):
         if self.is_recharging:
@@ -34,7 +42,7 @@ class Drone:
                 self.is_recharging = False
 
     def update_battery(self, amount):
-        self.battery -= amount
+        self.current_battery -= amount
 
     def move(self, new_pos):
         self.start_pos = new_pos

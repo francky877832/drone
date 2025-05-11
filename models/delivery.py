@@ -10,7 +10,7 @@ class Delivery:
 
     def complete(self):
         self.completed = True
-        print(f"Delivery {self.id} completed.")
+        #print(f"Delivery {self.id} completed.")
 
 
     def __lt__(self, other):

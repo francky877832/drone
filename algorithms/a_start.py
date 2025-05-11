@@ -35,7 +35,7 @@ def a_star(graph, start, goal, nofly_zones, drone, deliveries):
             current_node = came_from.get(current_node)  # Obtenez le nœud précédent
             
             if current_node is None:
-                print("Chemin non trouvé !")
+                #print("Chemin non trouvé !")
                 return []  # Si on ne trouve pas de chemin, retour vide
 
         path.append(start_pos)  # Ajouter le point de départ à la fin
