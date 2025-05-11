@@ -11,11 +11,32 @@ class Drone:
         self.start_time = start_time # datetime.strptime(start_time, "%H:%M")
 
 
-        # Internal state
-        self.available = True
-        self.current_pos = start_pos
         self.current_battery = battery
         self.carrying_weight = 0.0
+
+        self.recharge_time = 0 
+        self.is_recharging = False
+        self.delivery_in_progress = None 
+
+
+    def is_available(self):
+        return not self.is_recharging
+
+    def start_recharge(self):
+        self.is_recharging = True
+        self.recharge_time = self.battery * 0.1  # Par exemple 10% du temps de batterie nécessaire pour la recharge
+
+    def decrement_recharge_time(self):
+        if self.is_recharging:
+            self.recharge_time -= 1
+            if self.recharge_time <= 0:
+                self.is_recharging = False
+
+    def update_battery(self, amount):
+        self.battery -= amount
+
+    def move(self, new_pos):
+        self.start_pos = new_pos
 
     def can_carry(self, weight):
         return weight <= self.max_weight

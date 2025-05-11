@@ -63,7 +63,8 @@ def a_star(graph, start, goal, nofly_zones, drone, deliveries):
             # Vérification du poids du voisin
             if neighbor.weight <= drone.max_weight:
                 battery_needed = euclidean_distance(current_node, neighbor_pos) * 2 / drone.speed  # Aller-retour ##time
-                if battery_needed <= drone.battery:
+                if battery_needed <= drone.battery: #Drone'ların şarj süresini hesaba katın. 
+
                     penality = apply_penality(current_node, neighbor_pos, nofly_zones)
                     tentative_g_score = current_cost + cost + penality
                     

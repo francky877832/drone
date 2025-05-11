@@ -2,6 +2,16 @@ from math import dist
 import math
 from utils.time import is_within_time_window
 
+import random
+
+def initialize_drones_on_graph(delivery_points, drones):
+    delivery_positions = [tuple(d.pos) for d in delivery_points]
+    for drone in drones:
+        random_position = random.choice(delivery_positions)
+        drone.start_pos = random_position
+
+    return drones
+
 
 def compute_base_cost(pos1, pos2, weight, priority):
     distance = dist(pos1, pos2)
@@ -101,7 +111,10 @@ def apply_penality(start_node, end_node, nofly_zones, cost_per_meter=10000):
 
 
 
-
+def get_battery_needed(drone, delivery):
+    distance_to_delivery = euclidean_distance(drone.current_pos, delivery.pos)
+    battery_needed = distance_to_delivery * 2 / drone.speed # roud-trip
+    return battery_needed
 
 
 

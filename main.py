@@ -1,5 +1,6 @@
 import json
 import random
+import heapq
 from models.drone import Drone
 from models.delivery import Delivery
 from models.no_fly_zone import NoFlyZone
@@ -10,6 +11,8 @@ from ga.ga import crossover, mutate
 from ga.fitness import compute_fitness 
 from algorithms.a_start import a_star
 from graphics.graph import plot_graph, plot_path, plot_combined_graph_and_path, plot_oriented_graph, plot_combined_oriented_graph_and_path
+from utils.simulate_delivery import simulate
+from utils.helpers import initialize_drones_on_graph
 
 
 
@@ -21,14 +24,16 @@ deliveries = [Delivery(**d) for d in data["deliveries"]]
 no_fly_zones = [NoFlyZone(**z) for z in data["no_fly_zones"]]
 population_size = len(drones)
 
+#drones initialisation
+initialize_drones_on_graph(deliveries, drones)
+
 # print(drones[0].max_weight)
 
 #complete_graph = build_graph(drones[0].start_pos, deliveries)
 graph = generate_complete_graph(deliveries)
 graph = generate_oriented_sparse_graph(deliveries, 3)
-#graph = generate_sparse_graph(deliveries, 3)
+graph = generate_sparse_graph(deliveries, 3)
 
-# print("Graphe généré :", graph)
 
 #plot_graph(deliveries, graph, no_fly_zones)
 
@@ -40,13 +45,19 @@ drone = drones[2]
 #print(graph[tuple(start.pos)][tuple(goal.pos)])
 # graph[tuple(start.pos)][tuple(goal.pos)] = 12000000
 
-print(start.pos, goal.pos)
-path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
-#print(path)
-#print(len(path))
-# plot_graph(deliveries, graph, no_fly_zones)
-# plot_path(path, deliveries)
-plot_combined_oriented_graph_and_path(deliveries, graph, no_fly_zones, path)
+# print(start.pos, goal.pos)
+# path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
+
+delivery_heap = []
+for delivery in deliveries:
+        heapq.heappush(delivery_heap, delivery)
+
+for i in range(5) :
+        print(f"\nSimulation {i+1}")
+        path = simulate(graph, drones, deliveries, no_fly_zones, delivery_heap)
+        plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
+
+
 
 """
 print("\nGénération de la population initiale...")
