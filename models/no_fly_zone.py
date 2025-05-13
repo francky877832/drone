@@ -25,7 +25,6 @@ class NoFlyZone:
         if start <= end:
             return start <= current <= end
         else:
-            # Plage horaire traverse minuit (ex: 23:00 - 02:00)
             return current >= start or current <= end
 
 

@@ -4,14 +4,6 @@ from utils.helpers import euclidean_distance, get_neighbors, is_within_no_fly_zo
 from queue import PriorityQueue
 
 
-grid_width = 100
-grid_height = 100
-
-# The grid can be implicit, or you can represent it like this (optional):
-grid = [[0 for _ in range(grid_width)] for _ in range(grid_height)]
-
-
-
 
 def a_star(graph, start, goal, nofly_zones, drone, deliveries):
     start_pos = tuple(start.pos)

@@ -44,6 +44,7 @@ graph = generate_sparse_graph(deliveries, 3)
 
 
 """A_start calişması ve path çizgisi"""
+
 """
 #kaynak, hedef and seçilen drone. Sadece deneyim için
 start = deliveries[16]
@@ -57,9 +58,12 @@ drone = drones[2]
 
 path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
 plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
+
 """
 
 """GA CSP CALISMASI"""
+
+
 
 print("\nBaşlangıc nufus uretme...")
 population_size = 10
@@ -93,6 +97,7 @@ for generation in range(number_generation):
     
     # Bir dahaki generation uretme
     population = generate_next_generation(population, graph, no_fly_zones, drones, deliveries)
+
 
 
 #Tum Generation en iyilerinin en iyisi alınmak

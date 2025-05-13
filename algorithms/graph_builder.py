@@ -18,7 +18,7 @@ def build_graph(start_pos, deliveries):
 
 
 def generate_complete_graph(delivery_points):
-    graph = {}  # Dictionnaire pour le graphe (pos1 → {pos2: cost})
+    graph = {}
     
     for from_point in delivery_points:
         graph[tuple(from_point.pos)] = {}  
@@ -40,14 +40,14 @@ def generate_oriented_sparse_graph(delivery_points, k=3):
         from_pos = tuple(from_point.pos)
         distances = []
 
-        # Calculer les distances vers tous les autres points
+        # tum noktaları arasında mesafe hesaplama
         for to_point in delivery_points:
             to_pos = tuple(to_point.pos)
             if from_pos != to_pos:
                 d = euclidean_distance(from_pos, to_pos)
                 distances.append((d, to_point))
 
-        # Garder les k plus proches voisins
+        # en yakun K komşu tutmak
         distances.sort(key=lambda x: x[0])
         k_nearest = distances[:k]
 
@@ -67,7 +67,7 @@ def generate_sparse_graph(delivery_points, k=3):
         from_pos = tuple(from_point.pos)
         distances = []
 
-        # Calculate distances to all other points
+        # diğer tum noktalarindan mesafe hesaplama
         for to_point in delivery_points:
             to_pos = tuple(to_point.pos)
             if from_pos != to_pos:
