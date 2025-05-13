@@ -6,7 +6,7 @@ from models.drone import Drone
 from models.delivery import Delivery
 from models.no_fly_zone import NoFlyZone
 from algorithms.graph_builder import build_graph, generate_complete_graph, generate_sparse_graph, generate_oriented_sparse_graph
-from ga.population import generate_initial_population
+from ga.population import generate_initial_population, generate_initial_full_population
 
 from ga.ga import crossover, mutate, tournament_selection, generate_next_generation
 from ga.fitness import evaluate_individual
@@ -16,200 +16,120 @@ from utils.simulate_delivery import simulate_all, simulate_for_signle_delivery
 from utils.helpers import initialize_drones_on_graph
 
 
-
+#başlangıç zamanı alinmasi
 start_time = time.time()
 
+#scenario dosyasi açma ve data alınması
 with open("scenario1.json", "r") as f:
     data = json.load(f)
 
+#data : drone, delivery ve noflyzone nesnelerini kurmak
 drones = [Drone(**d) for d in data["drones"]]
 deliveries = [Delivery(**d) for d in data["deliveries"]]
 no_fly_zones = [NoFlyZone(**z) for z in data["no_fly_zones"]]
 population_size = len(drones)
 
-#drones initialisation
+#drones, grafta initialisation
 initialize_drones_on_graph(deliveries, drones)
 
-# print(drones[0].max_weight)
 
-#complete_graph = build_graph(drones[0].start_pos, deliveries)
-graph = generate_complete_graph(deliveries)
-graph = generate_oriented_sparse_graph(deliveries, 3)
+""" graph oluçturma, 4 tane graflerimiz var : normal bir graphe, complete bir graph, oriented and non oriented sparse graph"""
+#rastlanti_graph = build_graph(drones[0].start_pos, deliveries)
+#graph = generate_complete_graph(deliveries)
+#graph = generate_oriented_sparse_graph(deliveries, 3)
 graph = generate_sparse_graph(deliveries, 3)
 
-
+"""graf gosterisi"""
 #plot_graph(deliveries, graph, no_fly_zones)
 
 
+"""A_start calişması ve path çizgisi"""
+"""
+#kaynak, hedef and seçilen drone. Sadece deneyim için
 start = deliveries[16]
-#goal = next(d for d in deliveries if tuple(d.pos)==(94,56))
 goal = deliveries[19]
 drone = drones[2]
-#print(graph[tuple(start.pos)][tuple(goal.pos)])
-# graph[tuple(start.pos)][tuple(goal.pos)] = 12000000
 
-# print(start.pos, goal.pos)
-# path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
+#A_start en ucuz path bulmanın gosterisi : bulundugun path'in 2 nokta arasında buyuk bir maliyet verilir ve o path'tan daha ucuz olan bulur
+#node1 = deliveries[17]
+#node2 = deliveries[2]
+#graph[tuple(node1.pos)][tuple(node2.pos)] = 12000000
 
+path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
+plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
+"""
 
+"""GA CSP CALISMASI"""
 
-
-
-
-
-print("\nGénération de la population initiale...")
-#population = generate_initial_population(drones, deliveries, size=5)
-population = generate_initial_population(drones, deliveries, size=5)
+print("\nBaşlangıc nufus uretme...")
+population_size = 10
+population = generate_initial_full_population(drones, deliveries, size=population_size)
 
 def check_empty_population(population):
     for idx, individu in enumerate(population):
         if all(len(livraisons) == 0 for livraisons in individu.values()):
             print(f"Birey {idx + 1}: Hiçbir drone'a teslimat atanmamış. Yebi bir senaryo seciniz.")
-
+            exit()
+"""baslanıc nufus bos olma kontrolü"""
 check_empty_population(population)
 
 
-# Initialize the population
-population_size = 10
-population = generate_initial_population(drones, deliveries, size=population_size)
+"""GA çalışmasi"""
 best_individuals = []
-# Run the GA for a number of generations
-for generation in range(2):  # Number of generations
-    print(f"Generation {generation}")
+number_generation = 2
+# Generation sayısına kadra GA yurutulmesi, 1 genration = bir iterasiyon
+for generation in range(number_generation):
+    print(f"Generation {generation+1}")
     
-    # Evaluate the fitness of the population
+    # Bir nufus icin fitness hesaplama
     population_fitness = [(individual, evaluate_individual(individual, graph, no_fly_zones, drones, deliveries)) for individual in population]
     
-    # Select the best individual (elitism)
+    # Mevcut nufustan en iyi individu alınmasi (elitism)
     best_individual = max(population_fitness, key=lambda x: x[1])
-    print(f"Best fitness: {best_individual[0]} => {best_individual[1]}")
+    print(f"Best individual: {best_individual[0]} => {best_individual[1]}")
+
+    #Tum nufus en iyi individu dizisine kaydetmek
     best_individuals.append(best_individual)
     
-    # Generate the next generation
+    # Bir dahaki generation uretme
     population = generate_next_generation(population, graph, no_fly_zones, drones, deliveries)
 
 
-
+#Tum Generation en iyilerinin en iyisi alınmak
 best_individual = max(best_individuals, key=lambda x : x[1])
 print(f"\nBEST INDIVIDUAL AMONG ALL GENERATION : {best_individual[0]} => {best_individual[1]}.\n")
 
+#En iyi individu teslimatlarinı alinmak, bir minHeap içinde
 best_deliveries = [d for d in deliveries for i in best_individual[0].values() if d.id in i]
-#best_deliveries_sorted = sorted(best_deliveries, key=lambda d: d.priority, reverse=True)  # Sort by priority (highest first)
-# print(best_deliveries)
 delivery_heap = []
 for delivery in best_deliveries:
-    heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop return the smallest element
+    heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop en kucuk element veriyor, o yuzden delivery.priority yerine -delivery.priority kullanılır
 
 
+#Her teslimatin path'larini saklanmak icin
 plot_path = []
 
+#Bu dongu icerseinde, en iyi teslimatlari rotalarini bulmaya calısır,
 for i in range(len(delivery_heap)) :
-    delivery = heapq.heappop(delivery_heap)
-    delivery = delivery[1]
+    delivery = heapq.heappop(delivery_heap) #heappop en buyuk mutlak degri olan veriyor
+    delivery = delivery[1] # cunku bu sekilde saklandı : (-delivery.priority, delivery)
 
     for drone_id, delivery_list in best_individual[0].items():
         if delivery.id in delivery_list:
             assigned_drone = drone_obj = next((d for d in drones if f"D{d.id}" == drone_id), None)
             break
-    
     path = simulate_for_signle_delivery(graph, assigned_drone, delivery, deliveries, no_fly_zones)
     plot_path.append(path)
     
     print("\n")
 
+#Algorithma'nın bitme zamanı
 end_time = time.time()
 
 
 print(f"Verimlilik :  {end_time-start_time} seconds.\n")
 
+#butun bulundugu rotalar gosterme
+#print(plot_path)
 for path in plot_path :
-    # print(path)
     plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
-# for i in range(12) :
-#     print(f"\nSimulation {i+1}")
-#     path = simulate_for_signle_delivery(graph, drones, best_deliveries, no_fly_zones, delivery_heap)
-#     #plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
-
-"""
-print("\nGénération de la population initiale...")
-population = generate_initial_population(drones, deliveries, size=5)
-population = generate_initial_smart_population(drones, deliveries, size=5)
-
-def check_empty_population(population):
-    for idx, individu in enumerate(population):
-        if all(len(livraisons) == 0 for livraisons in individu.values()):
-            print(f"Birey {idx + 1}: Hiçbir drone'a teslimat atanmamış. Yebi bir senaryo seciniz.")
-
-
-
-
-
-def run_genetic_algorithm(drones, deliveries, no_fly_zones, generations=20, population_size=5):
-    # Başlangıç popülasyonunu oluştur
-    population = generate_initial_smart_population(drones, deliveries, population_size)
-    check_empty_population(population)
-    for gen in range(generations):
-        print(f"\n{gen + 1}. Nesil:")
-
-        fitness_scores = []
-        for i, individual in enumerate(population):
-            score, violations = compute_fitness(individual, drones, deliveries, no_fly_zones)
-            fitness_scores.append((individual, score))
-            print(f"Birey {i+1} : Fitness = {score:.2f}, İhlaller = {len(violations)}")
-
-        # En iyi bireyleri sırala (fitness'e göre azalan)
-        fitness_scores.sort(key=lambda x: x[1], reverse=True)
-        best_individuals = [fs[0] for fs in fitness_scores[:2]]  # elitizm: en iyi 2 birey korunur
-
-
-        # Yeni nesil için liste hazırla
-        new_population = best_individuals[:]
-
-        # Yeni bireyler üret
-        while len(new_population) < population_size:
-            parent1 = random.choice(best_individuals)
-            parent2 = random.choice(best_individuals)
-            child = crossover(parent1, parent2)
-            mutated_child = mutate(child)
-            new_population.append(mutated_child)
-
-        population = new_population
-
-    # En iyi bireyi döndür
-    best_ind, best_score = max(fitness_scores, key=lambda x: x[1])
-    print(f"\nEn iyi birey bulundu. Fitness = {best_score:.2f}")
-    return best_ind
-
-print("Gelişim başlatılıyor...")
-best_solution = run_genetic_algorithm(drones, deliveries, no_fly_zones)
-print(best_solution)
-
-
-
-grid_width = 100
-grid_height = 100
-
-# The grid can be implicit, or you can represent it like this (optional):
-grid = [[0 for _ in range(grid_width)] for _ in range(grid_height)]
-
-for individual in population:
-        for drone_id, deliveries_for_drone in individual.items():
-            drone = next(d for d in drones if d.id == int(drone_id[1:]))  # Find the drone object
-            
-            for delivery_id in deliveries_for_drone:
-                delivery = next(d for d in deliveries if d.id == delivery_id)  # Find the delivery object
-                
-                # Apply A* to get the optimal path for this drone to this delivery
-                start_pos = drone.current_pos
-                goal_pos = delivery.pos
-                optimal_path = astar(start_pos, goal_pos, drone, no_fly_zones, delivery)
-                
-                # Update drone's route and other relevant data
-                if optimal_path:
-                    print(f"Drone {drone.id} has an optimal route to delivery {delivery.id}: {optimal_path}")
-                    drone.current_pos = goal_pos  # Update drone position after delivery
-                else:
-                    print(f"No optimal path found for Drone {drone.id} to Delivery {delivery.id}")
-
-
-"""

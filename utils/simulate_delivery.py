@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zones):
   
 
-    print(f"Simlation for delivery : {delivery.id} - priority : {delivery.priority}")
+    print(f"Simlation for delivery : {delivery.id} - priority : {delivery.priority} - drone : {drone.id} : {drone.start_pos}")
 
     # Chercher un drone disponible
     available_drone = drone
