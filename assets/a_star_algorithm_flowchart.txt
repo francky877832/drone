@@ -1,0 +1,45 @@
+from graphviz import Digraph
+
+def generate_a_star_flowchart():
+    # Create a new directed graph
+    dot = Digraph(comment='A* Algorithm')
+
+    # Add nodes (steps of the flowchart)
+    dot.node('A', 'Start')
+    dot.node('B', 'Initialize open_set with start position')
+    dot.node('C', 'Initialize g_scores and came_from')
+    dot.node('D', 'While open_set is not empty')
+    dot.node('E', 'Pop the node with lowest f_score')
+    dot.node('F', 'Check if current node is goal')
+    dot.node('G', 'If goal reached, redraw path')
+    dot.node('H', 'For each neighbor of current node')
+    dot.node('I', 'Check if neighbor weight is within drone limit')
+    dot.node('J', 'Check if battery is enough for the move')
+    dot.node('K', 'Calculate penalty for no-fly zones')
+    dot.node('L', 'Update g_score and f_score')
+    dot.node('M', 'Add neighbor to open_set')
+    dot.node('N', 'Return None if no path found')
+    dot.node('O', 'End')
+
+    # Add edges (connections between steps)
+    dot.edge('A', 'B')  # Start -> Initialize open_set
+    dot.edge('B', 'C')  # Initialize open_set -> Initialize g_scores
+    dot.edge('C', 'D')  # Initialize g_scores -> While loop
+    dot.edge('D', 'E')  # While loop -> Pop node
+    dot.edge('E', 'F')  # Pop node -> Check goal
+    dot.edge('F', 'G')  # If goal reached -> Redraw path
+    dot.edge('G', 'O')  # Redraw path -> End
+    dot.edge('F', 'H')  # If not goal -> For neighbors
+    dot.edge('H', 'I')  # For each neighbor -> Check weight
+    dot.edge('I', 'J')  # If weight ok -> Check battery
+    dot.edge('J', 'K')  # If battery ok -> Calculate penalty
+    dot.edge('K', 'L')  # Calculate penalty -> Update g_score
+    dot.edge('L', 'M')  # Update g_score -> Add neighbor
+    dot.edge('M', 'D')  # Add neighbor -> Continue loop
+    dot.edge('D', 'N')  # While loop -> If no path found
+
+    # Render the flowchart to a PNG file
+    dot.render('a_star_algorithm_flowchart', format='png', view=True)
+
+# Call the function to generate the flowchart
+generate_a_star_flowchart()

@@ -1,0 +1,25 @@
+
+Untitled0.ipynb
+Untitled0.ipynb_
+Files
+Analyze your files with code written by Gemini
+..
+Drop files to upload them to session storage.
+Disk
+70.06 GB available
+
+[11]
+0s
+    dot.edge('I', 'J') # If all assigned -> Return individual
+    dot.edge('I', 'D') # If not done -> Go back to delivery loop
+    dot.edge('L', 'D') # Assigned is False -> Continue checking deliveries
+    dot.edge('J', 'K') # Return individual -> Done
+
+    # Render the flowchart to a PNG file
+    dot.render('generate_random_full_individual_flowchart', format='png', view=True)
+
+# Call the function to generate the flowchart
+generate_flowchart()
+
+Colab paid products - Cancel contracts here
+

@@ -1,0 +1,59 @@
+from graphviz import Digraph
+
+def generate_evaluate_individual_flowchart():
+    # Create a new directed graph
+    dot = Digraph(comment='Evaluate Individual Algorithm')
+
+    # Add nodes (steps of the flowchart)
+    dot.node('A', 'Start')
+    dot.node('B', 'Initialize total_energy, total_violations, successful_deliveries')
+    dot.node('C', 'For each drone in individual')
+    dot.node('D', 'Reset drone')
+    dot.node('E', 'For each delivery in drone sequence')
+    dot.node('F', 'Get start and goal deliveries')
+    dot.node('G', 'Call A* to find path')
+    dot.node('H', 'Check if path exists')
+    dot.node('I', 'Calculate cost for the path')
+    dot.node('J', 'Check for CSP violations')
+    dot.node('K', 'Simulate delivery')
+    dot.node('L', 'Update drone battery and weight')
+    dot.node('M', 'Start drone recharge')
+    dot.node('N', 'Estimate arrival time')
+    dot.node('O', 'Check if arrival time is valid')
+    dot.node('P', 'Calculate time to charge and deliver')
+    dot.node('Q', 'Update drone start time')
+    dot.node('R', 'Decrement recharge time and reset drone')
+    dot.node('S', 'Update total energy and successful deliveries')
+    dot.node('T', 'Calculate fitness: successful deliveries, energy, violations')
+    dot.node('U', 'Return fitness')
+    dot.node('V', 'End')
+
+    # Add edges (connections between steps)
+    dot.edge('A', 'B')  # Start -> Initialize variables
+    dot.edge('B', 'C')  # Initialize variables -> For each drone
+    dot.edge('C', 'D')  # For each drone -> Reset drone
+    dot.edge('D', 'E')  # Reset drone -> For each delivery
+    dot.edge('E', 'F')  # For each delivery -> Get start and goal
+    dot.edge('F', 'G')  # Get start and goal -> Call A*
+    dot.edge('G', 'H')  # Call A* -> Check if path exists
+    dot.edge('H', 'I')  # If path exists -> Calculate cost
+    dot.edge('H', 'J')  # If no path -> Check CSP violations
+    dot.edge('I', 'J')  # Calculate cost -> Check CSP violations
+    dot.edge('J', 'K')  # Check CSP -> Simulate delivery
+    dot.edge('K', 'L')  # Simulate delivery -> Update drone battery/weight
+    dot.edge('L', 'M')  # Update battery -> Start recharge
+    dot.edge('M', 'N')  # Start recharge -> Estimate arrival time
+    dot.edge('N', 'O')  # Estimate arrival time -> Check time validity
+    dot.edge('O', 'P')  # If valid -> Calculate charge and delivery time
+    dot.edge('P', 'Q')  # Calculate time -> Update start time
+    dot.edge('Q', 'R')  # Update start time -> Decrement recharge time
+    dot.edge('R', 'S')  # Decrement recharge -> Update total energy
+    dot.edge('S', 'T')  # Update total -> Calculate fitness
+    dot.edge('T', 'U')  # Calculate fitness -> Return fitness
+    dot.edge('U', 'V')  # Return fitness -> End
+
+    # Render the flowchart to a PNG file
+    dot.render('evaluate_individual_algorithm_flowchart', format='png', view=True)
+
+# Call the function to generate the flowchart
+generate_evaluate_individual_flowchart()

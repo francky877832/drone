@@ -1,0 +1,71 @@
+from graphviz import Digraph
+
+def generate_algorithm_flowchart():
+    dot = Digraph(comment='Drone Delivery Optimization Algorithm')
+
+    # Start node
+    dot.node('A', 'Start')
+
+    # Loading Data
+    dot.node('B', 'Load Scenario Data (JSON)')
+
+    # Data Initialization
+    dot.node('C', 'Initialize Drones, Deliveries, NoFly Zones')
+
+    # Graph Generation
+    dot.node('D', 'Generate Graph (Complete, Sparse, Oriented)')
+
+    # A* Pathfinding (Optional)
+    dot.node('E', 'A* Pathfinding (Optional)')
+
+    # GA Initialization
+    dot.node('F', 'Generate Initial Population')
+
+    # Fitness Evaluation
+    dot.node('G', 'Evaluate Population Fitness')
+
+    # Elitism
+    dot.node('H', 'Select Best Individuals (Elitism)')
+
+    # Crossover and Mutation
+    dot.node('I', 'Crossover and Mutation (Generate Next Generation)')
+
+    # GA Loop
+    dot.node('J', 'Repeat for Generations')
+
+    # Best Solution
+    dot.node('K', 'Select Best Individual from All Generations')
+
+    # Simulate Path for Deliveries
+    dot.node('L', 'Simulate Path for Deliveries')
+
+    # Plot Results
+    dot.node('M', 'Plot Delivery Routes')
+
+    # End node
+    dot.node('N', 'End')
+
+    # Define the flow
+    dot.edge('A', 'B')
+    dot.edge('B', 'C')
+    dot.edge('C', 'D')
+    dot.edge('D', 'E')
+    dot.edge('E', 'F')
+    dot.edge('F', 'G')
+    dot.edge('G', 'H')
+    dot.edge('H', 'I')
+    dot.edge('I', 'J')
+    dot.edge('J', 'K')
+    dot.edge('K', 'L')
+    dot.edge('L', 'M')
+    dot.edge('M', 'N')
+
+    # Render and save as PNG
+    file_path = 'algorithm_flowchart.png'
+    dot.render(file_path, format='png', view=False)
+    
+    return file_path
+
+# Generate and save the flowchart as PNG
+flowchart_path = generate_algorithm_flowchart()
+flowchart_path
