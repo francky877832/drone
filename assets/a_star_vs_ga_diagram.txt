@@ -1,0 +1,50 @@
+from graphviz import Digraph
+
+dot = Digraph(comment='A* vs Genetic Algorithm')
+
+# A* Flow
+dot.node('A1', 'Start Position')
+dot.node('A2', 'Apply A* Search')
+dot.node('A3', 'Check Constraints')
+dot.node('A4', 'Reach Goal')
+
+dot.edge('A1', 'A2')
+dot.edge('A2', 'A3')
+dot.edge('A3', 'A4')
+
+# GA Flow
+dot.node('G1', 'Initialize Population')
+dot.node('G2', 'Evaluate Individuals (A*, CSP)')
+dot.node('G3', 'Select & Crossover')
+dot.node('G4', 'Mutate')
+dot.node('G5', 'New Generation')
+dot.node('G6', 'Best Solution')
+
+dot.edge('G1', 'G2')
+dot.edge('G2', 'G3')
+dot.edge('G3', 'G4')
+dot.edge('G4', 'G5')
+dot.edge('G5', 'G2', label='Loop until\nconverged')
+dot.edge('G2', 'G6', constraint='false', style='dashed', label='after max gen')
+
+# Cluster layout (optional visual grouping)
+with dot.subgraph(name='cluster_A') as a:
+    a.attr(style='filled', color='lightgrey')
+    a.attr(label='A* Algorithm')
+    a.node('A1')
+    a.node('A2')
+    a.node('A3')
+    a.node('A4')
+
+with dot.subgraph(name='cluster_GA') as ga:
+    ga.attr(style='filled', color='lightblue')
+    ga.attr(label='Genetic Algorithm')
+    ga.node('G1')
+    ga.node('G2')
+    ga.node('G3')
+    ga.node('G4')
+    ga.node('G5')
+    ga.node('G6')
+
+# Output the diagram
+dot.render('a_star_vs_ga_diagram', format='png', cleanup=True)
