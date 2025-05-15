@@ -25,22 +25,30 @@ def evaluate_individual(individual, graph, no_fly_zones, drones, deliveries):
             needed_cost = 0
             path = []
 
+            if tuple(drone.start_pos) == tuple(delivery.pos) :
+                continue
+
             try:
                 start = next(d for d in deliveries if tuple(d.pos) == tuple(drone.start_pos))
                 goal = next(d for d in deliveries if tuple(d.pos) == tuple(delivery.pos))
             except StopIteration:
-                total_violations += 1
+                #total_violations += 1
                 continue
+
 
             path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
             if not path:
-                total_violations += 1
+                #total_violations += 1
                 continue
 
             for i in range(len(path)-1):
                 needed_cost += graph[path[i]][path[i+1]]
 
-            total_violations += check_all_csp_for_violation(start, goal, drone, delivery, needed_cost)
+            csp_violation = check_all_csp_for_violation(start, goal, drone, delivery, needed_cost)
+            total_violations += csp_violation
+
+            # if not completed :
+                
 
             # Simuler la livraison
             drone.current_weight = delivery.weight
@@ -59,7 +67,7 @@ def evaluate_individual(individual, graph, no_fly_zones, drones, deliveries):
             try:
                 arrival_time = datetime.strptime(estimated_arrival_time, "%H:%M")
             except:
-                total_violations += 1
+                #total_violations += 1
                 continue
 
             time_to_charge = timedelta(minutes=drone.recharge_time)
@@ -71,6 +79,7 @@ def evaluate_individual(individual, graph, no_fly_zones, drones, deliveries):
             drone.decrement_recharge_time()
             drone.is_recharging = False
 
+            #total_energy += needed_cost
             total_energy += needed_cost
             successful_deliveries += 1
 

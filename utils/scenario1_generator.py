@@ -4,13 +4,13 @@ from datetime import datetime, timedelta
 
 scenario_no = 1
 
-num_drone = 5
+num_drone = 10
 
-num_delivery = 20
+num_delivery = 50
 
 delivery_timedelta_hours = 10
-delivery_hours_start = 8      # Livraisons commencent à 08:00
-delivery_hours_end = 18       # Fin des livraisons à 18:00
+delivery_hours_start = 0     # Livraisons commencent à 08:00
+delivery_hours_end = 23     # Fin des livraisons à 18:00
 
 num_nfz = 3
 nfz_hours_start = 0         # Zones actives de 11h à 12h (heures critiques comme pause déjeuner ou école)
@@ -61,7 +61,8 @@ for i in range(num_delivery):
         "pos": random_coord(),
         "weight": round(random.uniform(delivery_min_weight, delivery_max_weight), 2),
         "priority": random.randint(1, num_drone),
-        "time_window": random_time_window()
+        "time_window": random_time_window(),
+        "violable" : random.choice([True, False])
     })
 
 # ----- No-Fly Zones -----
@@ -74,7 +75,8 @@ for i in range(num_nfz):  # Par exemple, 5 zones interdites
         "active_time": [
             f"{random.randint(nfz_hours_start, nfz_hours_end):02d}:{random.choice(['00', '15', '30', '45'])}",
             f"{random.randint(nfz_hours_start, nfz_hours_end):02d}:{random.choice(['00', '15', '30', '45'])}"
-        ]
+        ],
+        "violable" : random.choice([True, False])
     }
     no_fly_zones.append(zone)
     

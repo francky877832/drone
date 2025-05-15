@@ -1,5 +1,6 @@
 import json
 import random
+import math
 import time
 import heapq
 from models.drone import Drone
@@ -61,60 +62,68 @@ plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
 
 """
 
-"""GA CSP CALISMASI"""
+
+    # def check_empty_population(population):
+    #     for idx, individu in enumerate(population):
+    #         if all(len(livraisons) == 0 for livraisons in individu.values()):
+    #             print(f"Birey {idx + 1}: Hiçbir drone'a teslimat atanmamış. Yebi bir senaryo seciniz.")
+    #             exit()
+    # """baslanıc nufus bos olma kontrolü"""
+    # check_empty_population(population)
 
 
-
-print("\nBaşlangıc nufus uretme...")
-population_size = 10
-population = generate_initial_full_population(drones, deliveries, size=population_size)
-
-def check_empty_population(population):
-    for idx, individu in enumerate(population):
-        if all(len(livraisons) == 0 for livraisons in individu.values()):
-            print(f"Birey {idx + 1}: Hiçbir drone'a teslimat atanmamış. Yebi bir senaryo seciniz.")
-            exit()
-"""baslanıc nufus bos olma kontrolü"""
-check_empty_population(population)
-
-
-"""GA çalışmasi"""
-best_individuals = []
-number_generation = 2
-# Generation sayısına kadra GA yurutulmesi, 1 genration = bir iterasiyon
-for generation in range(number_generation):
-    print(f"Generation {generation+1}")
+"""Butun teslimatlar için"""
+deliveries_ = deliveries.copy()
+for i in range(math.ceil(len(deliveries)/len(drones))):
     
-    # Bir nufus icin fitness hesaplama
-    population_fitness = [(individual, evaluate_individual(individual, graph, no_fly_zones, drones, deliveries)) for individual in population]
-    
-    # Mevcut nufustan en iyi individu alınmasi (elitism)
-    best_individual = max(population_fitness, key=lambda x: x[1])
-    print(f"Best individual: {best_individual[0]} => {best_individual[1]}")
-
-    #Tum nufus en iyi individu dizisine kaydetmek
-    best_individuals.append(best_individual)
-    
-    # Bir dahaki generation uretme
-    population = generate_next_generation(population, graph, no_fly_zones, drones, deliveries)
+    """GA CSP CALISMASI"""
 
 
+    print("\nBaşlangıc nufus uretme...")
+    population_size = 5
+    population = generate_initial_full_population(drones, deliveries_, size=population_size)
 
-#Tum Generation en iyilerinin en iyisi alınmak
-best_individual = max(best_individuals, key=lambda x : x[1])
-print(f"\nBEST INDIVIDUAL AMONG ALL GENERATION : {best_individual[0]} => {best_individual[1]}.\n")
+    print(f"\n{i+1}. DEVRE\n")
+    """GA çalışmasi"""
+    best_individuals = []
+    number_generation = 5
+    # Generation sayısına kadra GA yurutulmesi, 1 genration = bir iterasiyon
+    for generation in range(number_generation):
+        print(f"Generation {generation+1}")
+        
+        # Bir nufus icin fitness hesaplama
+        population_fitness = [(individual, evaluate_individual(individual, graph, no_fly_zones, drones, deliveries)) for individual in population]
+        
+        # Mevcut nufustan en iyi individu alınmasi (elitism)
+        best_individual = max(population_fitness, key=lambda x: x[1])
+        print(f"Best individual: {best_individual[0]} => {best_individual[1]}")
 
-#En iyi individu teslimatlarinı alinmak, bir minHeap içinde
-best_deliveries = [d for d in deliveries for i in best_individual[0].values() if d.id in i]
-delivery_heap = []
-for delivery in best_deliveries:
-    heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop en kucuk element veriyor, o yuzden delivery.priority yerine -delivery.priority kullanılır
+        #Tum nufus en iyi individu dizisine kaydetmek
+        best_individuals.append(best_individual)
+        
+        # Bir dahaki generation uretme
+        population = generate_next_generation(population, graph, no_fly_zones, drones, deliveries)
+
+
+
+    #Tum Generation en iyilerinin en iyisi alınmak
+    best_individual = max(best_individuals, key=lambda x : x[1])
+    print(f"\nBEST INDIVIDUAL AMONG ALL GENERATION : {best_individual[0]} => {best_individual[1]}.\n")
+
+    #En iyi individu teslimatlarinı alinmak, bir minHeap içinde
+    best_deliveries = [d for d in deliveries_ for i in best_individual[0].values() if d.id in i]
+    delivery_heap = []
+    for delivery in best_deliveries:
+        heapq.heappush(delivery_heap, (-delivery.priority, delivery)) #heappop en kucuk element veriyor, o yuzden delivery.priority yerine -delivery.priority kullanılır
+
+    deliveries_ = [d for d in deliveries if d not in best_deliveries]
 
 
 #Her teslimatin path'larini saklanmak icin
 plot_path = []
 
 #Bu dongu icerseinde, en iyi teslimatlari rotalarini bulmaya calısır,
+success_deliveries = 0
 for i in range(len(delivery_heap)) :
     delivery = heapq.heappop(delivery_heap) #heappop en buyuk mutlak degri olan veriyor
     delivery = delivery[1] # cunku bu sekilde saklandı : (-delivery.priority, delivery)
@@ -123,7 +132,7 @@ for i in range(len(delivery_heap)) :
         if delivery.id in delivery_list:
             assigned_drone = drone_obj = next((d for d in drones if f"D{d.id}" == drone_id), None)
             break
-    path = simulate_for_signle_delivery(graph, assigned_drone, delivery, deliveries, no_fly_zones)
+    path, success_deliveries = simulate_for_signle_delivery(graph, assigned_drone, delivery, deliveries, no_fly_zones, success_deliveries)
     plot_path.append(path)
     
     print("\n")
@@ -131,10 +140,16 @@ for i in range(len(delivery_heap)) :
 #Algorithma'nın bitme zamanı
 end_time = time.time()
 
+valid_paths = [path for path in plot_path if len(path) > 1]
+print(plot_path)
+success_deliveries = len(valid_paths)
 
-print(f"Verimlilik :  {end_time-start_time} seconds.\n")
+print(success_deliveries)
+print(f"Tamamlanan Teslimat Yüzdesi (%) : {success_deliveries*5*100/len(deliveries)}.\n")
+print(f"Ortalama Enerji Tüketimi : {success_deliveries*5*100/len(deliveries)}.\n")
+print(f"Algoritma çalışma süresi :  {end_time-start_time} seconds.\n")
 
 #butun bulundugu rotalar gosterme
 #print(plot_path)
-for path in plot_path :
+for path in valid_paths :
     plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)

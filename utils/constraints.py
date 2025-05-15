@@ -24,7 +24,7 @@ def check_drone_can_support_cost(drone, needed_cost):
 def check_drone_can_support_weigth(drone, delivery):
     return drone.max_weight >= delivery.weight
 
-def chech_drone_is_within_time_window(estimated_arrival_time, delivery):
+def check_drone_is_within_time_window(estimated_arrival_time, delivery):
      return is_within_time_window(estimated_arrival_time, delivery.time_window)
 
 
@@ -35,7 +35,7 @@ def check_all_csp(start, goal, drone, delivery, needed_cost):
     if  check_single_delivery_per_trip(drone) and not check_drone_recharging(drone) :
         if check_drone_can_support_cost(drone, needed_cost):
             if check_drone_can_support_weigth(drone, delivery) :
-                if chech_drone_is_within_time_window(estimated_arrival_time, delivery):
+                if check_drone_is_within_time_window(estimated_arrival_time, delivery):
                     return drone 
                 else:
                     print(f"CSP Violation 4 - Drone {drone.id} arrival time is not with time window for Delivery {delivery.id}. {estimated_arrival_time} not in {delivery.time_window}  Re-adding to queue.")
@@ -62,7 +62,7 @@ def check_all_csp_for_violation(start, goal, drone, delivery, needed_cost):
         violations += 1
     if not check_drone_can_support_weigth(drone, delivery) :
         violations += 1
-    if chech_drone_is_within_time_window(estimated_arrival_time, delivery):
+    if not check_drone_is_within_time_window(estimated_arrival_time, delivery):
         violations += 1
 
     return violations

@@ -16,7 +16,7 @@ def a_star(graph, start, goal, nofly_zones, drone, deliveries):
     # Fonction heuristique A* (distance à la cible + pénalité de zone interdite)
     def heuristic(n, target, nofly_zones):
         distance_to_target = euclidean_distance(n, target)
-        nofly_penalty = apply_penality(n, target, nofly_zones)
+        nofly_penalty = apply_penality(n, target, nofly_zones, drone)
         return distance_to_target + nofly_penalty
 
     def redraw_path(came_from, start_pos, goal_pos):
@@ -57,7 +57,7 @@ def a_star(graph, start, goal, nofly_zones, drone, deliveries):
                 battery_needed = euclidean_distance(current_node, neighbor_pos) * 2 / drone.speed  # Aller-retour ##time
                 if battery_needed <= drone.battery: #Drone'ların şarj süresini hesaba katın. 
 
-                    penality = apply_penality(current_node, neighbor_pos, nofly_zones)
+                    penality = apply_penality(current_node, neighbor_pos, nofly_zones, drone)
                     tentative_g_score = current_cost + cost + penality
                     
                     # Si le voisin n'a pas encore été exploré ou si son score est meilleur

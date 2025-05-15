@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 
 
-def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zones):
+def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zones, success_deliveries=0):
   
 
     print(f"Simlation for delivery : {delivery.id} - priority : {delivery.priority} - drone : {drone.id} : {drone.start_pos}")
@@ -27,7 +27,9 @@ def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zone
     for i in range(len(path)-1) :
         needed_cost += graph[path[i]][path[i+1]]
         
-    check_all_csp(start, goal, drone, delivery, needed_cost)
+    drone = check_all_csp(start, goal, drone, delivery, needed_cost)
+    if drone is not None :
+        success_deliveries += 1
 
 
 
@@ -60,7 +62,7 @@ def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zone
 
 
 
-    return path
+    return path, success_deliveries
 
 
 

@@ -4,7 +4,7 @@ from utils.time import is_within_time_window
 
 import random
 
-fixed_penality = 100
+fixed_penality = 10
 
 def initialize_drones_on_graph(delivery_points, drones):
     delivery_positions = [tuple(d.pos) for d in delivery_points]
@@ -35,27 +35,58 @@ def heuristic(n, target, nofly_zones):
 
 
 
-from shapely.geometry import LineString, Polygon
 
-def apply_fixed_penality(start_node, end_node, nofly_zones):
-    """Vérifie si un mouvement entre start_node et end_node traverse une zone interdite."""
+
+
+
+from datetime import datetime
+
+def is_within_time_window(current_time_str, time_window):
+    current_time = datetime.strptime(current_time_str, "%H:%M").time()
+    start_time = datetime.strptime(time_window[0], "%H:%M").time()
+    end_time = datetime.strptime(time_window[1], "%H:%M").time()
+    #print("ok",time_window[0])
+
+    return start_time <= current_time <= end_time
+
+
+def apply_fixed_penality(start_node, end_node, nofly_zones, drone):
     path = LineString([start_node, end_node]) 
     penality = 0
     for zone in nofly_zones:
-
-        if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
-            # print("penality", start_node, end_node)
-            penality += fixed_penality
+        later = get_time_from_noflyzone(drone, zone.polygon)
+        #drone can trtaverse a noflyzone when nnot active
+        if is_within_time_window(later.strftime("%H:%M"), zone.active_time) :
+            if isinstance(zone.polygon, Polygon) and path.intersects(zone.polygon):
+                # print("penality", start_node, end_node)
+                penality += fixed_penality
     
     return penality
 
 
-from shapely.geometry import LineString, Polygon
 
-def apply_penality(start_node, end_node, nofly_zones, cost_per_meter=fixed_penality):
+
+from shapely.geometry import LineString, Polygon, Point
+from datetime import datetime, timedelta
+from shapely.geometry import Point
+
+def get_time_from_noflyzone(drone, zone):
+    start_node = tuple(drone.start_pos)
+    now = datetime.strptime(drone.start_time, "%H:%M")
+    closest_point = min(zone.exterior.coords, key=lambda coord: Point(coord).distance(Point(start_node)))
+    distance = Point(closest_point).distance(Point(start_node)) * 100  # in nmeter
+
+    later = now + timedelta(seconds=distance / drone.speed)
+
+    return later
+
+
+
+def apply_penality(start_node, end_node, nofly_zones, drone, cost_per_meter=fixed_penality):
     #print(cost_per_meter)
     path = LineString([start_node, end_node])
     penalty = 0
+    penalized_length = 0
 
     for zone in nofly_zones:
         if not zone.polygon.is_valid:
@@ -67,12 +98,19 @@ def apply_penality(start_node, end_node, nofly_zones, cost_per_meter=fixed_penal
 
             # Handle both LineString and MultiLineString results
             if not intersection.is_empty:
-                if intersection.geom_type == 'LineString':
-                    penalized_length = intersection.length
-                elif intersection.geom_type == 'MultiLineString':
-                    penalized_length = sum(line.length for line in intersection.geoms)
-                else:
-                    penalized_length = 0
+                later = get_time_from_noflyzone(drone, zone.polygon)
+                # print(later.strftime("%H:%M"))
+                # print(zone.active_time)
+
+                #drone can trtaverse a noflyzone when nnot active
+                if  is_within_time_window(later.strftime("%H:%M"), zone.active_time) :
+                    # print("no nofly_zones violation")
+                    if intersection.geom_type == 'LineString':
+                        penalized_length = intersection.length
+                    elif intersection.geom_type == 'MultiLineString':
+                        penalized_length = sum(line.length for line in intersection.geoms)
+                    else:
+                        penalized_length = 0
 
                 penalty += math.ceil(penalized_length) * cost_per_meter
                 # print(f"Penalty applied between {start_node} and {end_node}: {penalized_length:.2f} m")
@@ -90,15 +128,6 @@ def compute_cost(start_node, end_node, weight, priority, nofly_zones):
     return total_cost
 
 
-
-from datetime import datetime
-
-def is_within_time_window(current_time_str, time_window):
-    current_time = datetime.strptime(current_time_str, "%H:%M").time()
-    start_time = datetime.strptime(time_window[0], "%H:%M").time()
-    end_time = datetime.strptime(time_window[1], "%H:%M").time()
-
-    return start_time <= current_time <= end_time
 
 
 

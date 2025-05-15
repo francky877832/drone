@@ -2,11 +2,12 @@ from shapely.geometry import Point, Polygon
 from datetime import datetime
 
 class NoFlyZone:
-    def __init__(self, id, coordinates, active_time):
+    def __init__(self, id, coordinates, active_time, violable):
         self.id = id
         self.coordinates = coordinates  # liste de (x, y)
         self.active_time = active_time  # ("HH:MM", "HH:MM")
         self.polygon = Polygon(coordinates)  # Polygone oluşturuluyor
+        self.violable = violable
 
     """def is_active(self, current_time_str):
         from datetime import datetime

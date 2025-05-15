@@ -1,10 +1,11 @@
 class Delivery:
-    def __init__(self, id, pos, weight, priority, time_window):
+    def __init__(self, id, pos, weight, priority, time_window, violable):
         self.id = id
         self.pos = pos
         self.weight = weight
         self.priority = priority
         self.time_window = time_window  # ("HH:MM", "HH:MM")
+        self.violable = violable
     
         self.completed = False
 

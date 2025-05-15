@@ -52,6 +52,22 @@ def generate_random_full_individual(drones, deliveries):
 
     return individual
 
+
+def generate_random_full_individual(drones, deliveries):
+    
+    individual = {f"D{d.id}": [] for d in drones}  
+    shuffled_deliveries = deliveries.copy() 
+        
+    random.shuffle(shuffled_deliveries) 
+    for delivery in shuffled_deliveries:
+        for drone in drones:
+            key = f"D{drone.id}"
+            if len(individual[key]) == 0: #constraint , 1 drone = 1 delivery 
+                individual[key].append(delivery.id) 
+                break
+
+    return individual
+
 def generate_initial_population(drones, deliveries, size=5):
     return [generate_random_individual(drones, deliveries) for _ in range(size)]
 
