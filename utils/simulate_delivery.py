@@ -1,4 +1,5 @@
 import heapq
+import time
 from time import sleep
 from utils.helpers import get_battery_needed, compute_cost, is_within_time_window, estimate_arrival_time, euclidean_distance
 from algorithms.a_start import a_star
@@ -23,7 +24,10 @@ def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zone
     goal = next(d for d in deliveries if tuple(d.pos) == tuple(delivery.pos))
     
     #this cost already tookm in consideration the penality
+    start_time = time.time()
     path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
+    end_time = time.time()
+    # print("A_START AVERAGE TIME : ", end_time-start_time)
     for i in range(len(path)-1) :
         needed_cost += graph[path[i]][path[i+1]]
         

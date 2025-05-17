@@ -2,7 +2,7 @@ import json
 import random
 from datetime import datetime, timedelta
 
-scenario_no = 1
+scenario_no = 2
 
 num_drone = 10
 
@@ -88,7 +88,7 @@ scenario = {
     "no_fly_zones": no_fly_zones
 }
 
-with open(f"scenario{scenario_no}.json", "w") as f:
+with open(f"scenario{scenario_no}.txt", "w") as f:
     json.dump(scenario, f, indent=4)
 
 print(f"scenario{scenario_no}.json généré avec succès.")

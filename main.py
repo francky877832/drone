@@ -19,9 +19,9 @@ from utils.helpers import initialize_drones_on_graph
 
 #başlangıç zamanı alinmasi
 start_time = time.time()
-
+scenario_no = 2
 #scenario dosyasi açma ve data alınması
-with open("scenario1.json", "r") as f:
+with open(f"scenario{scenario_no}.txt", "r") as f:
     data = json.load(f)
 
 #data : drone, delivery ve noflyzone nesnelerini kurmak
@@ -102,7 +102,10 @@ for i in range(math.ceil(len(deliveries)/len(drones))):
         best_individuals.append(best_individual)
         
         # Bir dahaki generation uretme
+        ga_start_time = time.time()
         population = generate_next_generation(population, graph, no_fly_zones, drones, deliveries)
+        ga_end_time = time.time()
+        print("GA AVERAGE TIME : ", ga_end_time-ga_start_time)
 
 
 
