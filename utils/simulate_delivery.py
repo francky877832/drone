@@ -27,7 +27,7 @@ def simulate_for_signle_delivery(graph, drone, delivery, deliveries, no_fly_zone
     start_time = time.time()
     path = a_star(graph, start, goal, no_fly_zones, drone, deliveries)
     end_time = time.time()
-    # print("A_START AVERAGE TIME : ", end_time-start_time)
+    print("A_START AVERAGE TIME : ", end_time-start_time)
     for i in range(len(path)-1) :
         needed_cost += graph[path[i]][path[i+1]]
         

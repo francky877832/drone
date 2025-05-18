@@ -39,6 +39,7 @@ def heuristic(n, target, nofly_zones):
 
 
 
+
 from datetime import datetime
 
 def is_within_time_window(current_time_str, time_window):
@@ -208,3 +209,21 @@ def estimate_arrival_time(start_time_str, distance, speed):
     arrival_time = start_time + timedelta(hours=travel_time_seconds)
     
     return arrival_time.strftime("%H:%M")
+
+
+def compute_average_energy(paths, graph) :
+    total_cost = 0
+    for idx, path in enumerate(paths):
+        path_cost = 0
+        for i in range(len(path) - 1):
+            u = path[i]
+            v = path[i + 1]
+            # Use get to avoid KeyError if edge not found
+            cost = graph.get(u, {}).get(v)
+            if cost is not None:
+                path_cost += cost
+            else:
+                path_cost += 0  
+        total_cost += total_cost
+
+    return total_cost/len(path)

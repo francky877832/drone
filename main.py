@@ -14,7 +14,7 @@ from ga.fitness import evaluate_individual
 from algorithms.a_start import a_star
 from graphics.graph import plot_graph, plot_path, plot_combined_graph_and_path, plot_oriented_graph, plot_combined_oriented_graph_and_path
 from utils.simulate_delivery import simulate_all, simulate_for_signle_delivery
-from utils.helpers import initialize_drones_on_graph
+from utils.helpers import initialize_drones_on_graph, compute_average_energy
 
 
 #başlangıç zamanı alinmasi
@@ -86,7 +86,7 @@ for i in range(math.ceil(len(deliveries)/len(drones))):
     print(f"\n{i+1}. DEVRE\n")
     """GA çalışmasi"""
     best_individuals = []
-    number_generation = 5
+    number_generation = 10
     # Generation sayısına kadra GA yurutulmesi, 1 genration = bir iterasiyon
     for generation in range(number_generation):
         print(f"Generation {generation+1}")
@@ -144,11 +144,12 @@ for i in range(len(delivery_heap)) :
 end_time = time.time()
 
 valid_paths = [path for path in plot_path if len(path) > 1]
-print(plot_path)
+# print(plot_path)
 success_deliveries = len(valid_paths)
 
+
 print(success_deliveries)
-print(f"Tamamlanan Teslimat Yüzdesi (%) : {success_deliveries*5*100/len(deliveries)}.\n")
+print(f"Tamamlanan Teslimat Yüzdesi (%) : {compute_average_energy(valid_paths, graph)}.\n")
 print(f"Ortalama Enerji Tüketimi : {success_deliveries*5*100/len(deliveries)}.\n")
 print(f"Algoritma çalışma süresi :  {end_time-start_time} seconds.\n")
 
