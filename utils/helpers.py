@@ -212,6 +212,8 @@ def estimate_arrival_time(start_time_str, distance, speed):
 
 
 def compute_average_energy(paths, graph) :
+    if len(paths) == 0 :
+        return 0
     total_cost = 0
     for idx, path in enumerate(paths):
         path_cost = 0
@@ -219,11 +221,13 @@ def compute_average_energy(paths, graph) :
             u = path[i]
             v = path[i + 1]
             # Use get to avoid KeyError if edge not found
+            #print(u, v)
             cost = graph.get(u, {}).get(v)
             if cost is not None:
                 path_cost += cost
             else:
                 path_cost += 0  
-        total_cost += total_cost
-
-    return total_cost/len(path)
+        total_cost += path_cost
+    #print(paths)
+    #print(total_cost)
+    return total_cost/len(paths)

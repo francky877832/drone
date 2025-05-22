@@ -34,11 +34,17 @@ population_size = len(drones)
 initialize_drones_on_graph(deliveries, drones)
 
 
+
 """ graph oluçturma, 4 tane graflerimiz var : normal bir graphe, complete bir graph, oriented and non oriented sparse graph"""
 #rastlanti_graph = build_graph(drones[0].start_pos, deliveries)
 #graph = generate_complete_graph(deliveries)
 #graph = generate_oriented_sparse_graph(deliveries, 3)
 graph = generate_sparse_graph(deliveries, 3)
+
+
+"""paths = [[(23, 92), (23, 77), (25, 66), (19, 59), (30, 52), (39, 41), (60, 46)], [(22, 22), (20, 12), (25, 0)]]
+print(compute_average_energy(paths, graph) )
+print(graph.get((23, 92), {}).get((23, 77)))"""
 
 """graf gosterisi"""
 #plot_graph(deliveries, graph, no_fly_zones)
@@ -74,11 +80,10 @@ plot_combined_graph_and_path(deliveries, graph, no_fly_zones, path)
 
 """Butun teslimatlar için"""
 deliveries_ = deliveries.copy()
-for i in range(math.ceil(len(deliveries)/len(drones))):
-    
+loop_num = math.ceil(len(deliveries)/len(drones))
+loop_num = 1
+for i in range(loop_num):
     """GA CSP CALISMASI"""
-
-
     print("\nBaşlangıc nufus uretme...")
     population_size = 5
     population = generate_initial_full_population(drones, deliveries_, size=population_size)
@@ -86,7 +91,7 @@ for i in range(math.ceil(len(deliveries)/len(drones))):
     print(f"\n{i+1}. DEVRE\n")
     """GA çalışmasi"""
     best_individuals = []
-    number_generation = 10
+    number_generation = 3
     # Generation sayısına kadra GA yurutulmesi, 1 genration = bir iterasiyon
     for generation in range(number_generation):
         print(f"Generation {generation+1}")
@@ -149,8 +154,8 @@ success_deliveries = len(valid_paths)
 
 
 print(success_deliveries)
-print(f"Tamamlanan Teslimat Yüzdesi (%) : {compute_average_energy(valid_paths, graph)}.\n")
-print(f"Ortalama Enerji Tüketimi : {success_deliveries*5*100/len(deliveries)}.\n")
+print(f"Tamamlanan Teslimat Yüzdesi (%) :  {success_deliveries*5*100/len(deliveries)}.\n")
+print(f"Ortalama Enerji Tüketimi : {compute_average_energy(valid_paths, graph)}.\n")
 print(f"Algoritma çalışma süresi :  {end_time-start_time} seconds.\n")
 
 #butun bulundugu rotalar gosterme
