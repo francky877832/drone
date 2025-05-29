@@ -1,5 +1,5 @@
 class Delivery:
-    def __init__(self, id, pos, weight, priority, time_window, violable):
+    def __init__(self, id, pos, weight, priority, time_window, violable=True):
         self.id = id
         self.pos = pos
         self.weight = weight

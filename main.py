@@ -20,8 +20,10 @@ from utils.helpers import initialize_drones_on_graph, compute_average_energy
 #başlangıç zamanı alinmasi
 start_time = time.time()
 scenario_no = 2
+file_name = f"scenario{scenario_no}.txt"
+#file_name = f"scenario{scenario_no}_teacher.txt"
 #scenario dosyasi açma ve data alınması
-with open(f"scenario{scenario_no}.txt", "r") as f:
+with open(f"{file_name}", "r") as f:
     data = json.load(f)
 
 #data : drone, delivery ve noflyzone nesnelerini kurmak
@@ -85,13 +87,13 @@ loop_num = 1
 for i in range(loop_num):
     """GA CSP CALISMASI"""
     print("\nBaşlangıc nufus uretme...")
-    population_size = 5
+    population_size = 5 #normal 5
     population = generate_initial_full_population(drones, deliveries_, size=population_size)
 
     print(f"\n{i+1}. DEVRE\n")
     """GA çalışmasi"""
     best_individuals = []
-    number_generation = 3
+    number_generation = 5 #normal 5
     # Generation sayısına kadra GA yurutulmesi, 1 genration = bir iterasiyon
     for generation in range(number_generation):
         print(f"Generation {generation+1}")
